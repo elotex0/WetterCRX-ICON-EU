@@ -1,4 +1,4 @@
-name: Fetch ICON-D2 GRIB2 and Generate PNGs
+name: Fetch ICON-EU GRIB2 and Generate PNGs
 
 on:
   workflow_dispatch:
