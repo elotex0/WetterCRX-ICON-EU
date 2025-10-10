@@ -55,7 +55,7 @@ jobs:
           cd data/t2m
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
             i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/t_2m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_T_2M.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/t_2m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_T_2M.grib2.bz2"
             wget -O t2m_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "t2m_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f t2m_${i_padded}.grib2.bz2
@@ -64,7 +64,7 @@ jobs:
 
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
             i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/t_2m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_T_2M.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/t_2m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_T_2M.grib2.bz2"
             wget -O t2m_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "t2m_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f t2m_${i_padded}.grib2.bz2
@@ -78,7 +78,7 @@ jobs:
           cd data/ww
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/ww/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_WW.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/ww/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_WW.grib2.bz2"
             wget -O ww_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "ww_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f ww_${i_padded}.grib2.bz2
@@ -87,7 +87,7 @@ jobs:
 
            seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/ww/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_WW.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/ww/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_WW.grib2.bz2"
             wget -O ww_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "ww_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f ww_${i_padded}.grib2.bz2
@@ -100,7 +100,7 @@ jobs:
           cd data/tp
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_TOT_PREC.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_TOT_PREC.grib2.bz2"
             wget -O tot_prec_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "tot_prec_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f tot_prec_${i_padded}.grib2.bz2
@@ -109,7 +109,7 @@ jobs:
 
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_TOT_PREC.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_TOT_PREC.grib2.bz2"
             wget -O tot_prec_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "tot_prec_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f tot_prec_${i_padded}.grib2.bz2
@@ -122,7 +122,7 @@ jobs:
           cd data/wind
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-d2/grib/${{ env.RUN }}/vmax_10m/icon-d2_germany_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_VMAX_10M.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-d2/grib/${{ env.RUN }}/vmax_10m/icon-d2_germany_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_VMAX_10M.grib2.bz2"
             wget -O wind_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "wind_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f wind_${i_padded}.grib2.bz2
@@ -131,7 +131,7 @@ jobs:
 
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-d2/grib/${{ env.RUN }}/vmax_10m/icon-d2_germany_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_VMAX_10M.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-d2/grib/${{ env.RUN }}/vmax_10m/icon-d2_germany_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_VMAX_10M.grib2.bz2"
             wget -O wind_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "wind_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f wind_${i_padded}.grib2.bz2
@@ -144,7 +144,7 @@ jobs:
           cd data/snow
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c'
             i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_H_SNOW.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_H_SNOW.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "snow_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f snow_${i_padded}.grib2.bz2
@@ -153,7 +153,7 @@ jobs:
 
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c'
             i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_H_SNOW.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_H_SNOW.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "snow_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f snow_${i_padded}.grib2.bz2
@@ -166,7 +166,7 @@ jobs:
           cd data/snowfall
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c'
             i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_h_snow.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_h_snow.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "snow_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f snow_${i_padded}.grib2.bz2
@@ -175,7 +175,7 @@ jobs:
 
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c'
             i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_h_snow.grib2.bz2"
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_h_snow.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "snow_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f snow_${i_padded}.grib2.bz2
