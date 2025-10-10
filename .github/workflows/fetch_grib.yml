@@ -53,8 +53,7 @@ jobs:
         run: |
           mkdir -p data/t2m
           cd data/t2m
-          (echo $(seq 0 77) $(seq 78 3 120)) | tr ' ' '\n' | \ 
-          xargs -n 1 -P 14 -I{} bash -c '
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
             i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/t_2m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_T_2M.grib2.bz2"
             wget -O t2m_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
@@ -62,13 +61,31 @@ jobs:
               bunzip2 -f t2m_${i_padded}.grib2.bz2
             fi
           '
+
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
+            i_padded=$(printf "%03d" {})
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/t_2m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_T_2M.grib2.bz2"
+            wget -O t2m_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "t2m_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f t2m_${i_padded}.grib2.bz2
+            fi
+          '
+          
       
       - name: Download ww GRIB2 files
         run: |
           mkdir -p data/ww
           cd data/ww
-          (echo $(seq 0 77) $(seq 78 3 120)) | tr ' ' '\n' | \ 
-          xargs -n 1 -P 14 -I{} bash -c '
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c
+            i_padded=$(printf "%03d" {})
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/ww/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_WW.grib2.bz2"
+            wget -O ww_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "ww_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f ww_${i_padded}.grib2.bz2
+            fi
+          '
+
+           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/ww/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_WW.grib2.bz2"
             wget -O ww_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
@@ -81,8 +98,16 @@ jobs:
         run: |
           mkdir -p data/tp
           cd data/tp
-          (echo $(seq 0 77) $(seq 78 3 120)) | tr ' ' '\n' | \ 
-          xargs -n 1 -P 14 -I{} bash -c '
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c
+            i_padded=$(printf "%03d" {})
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_TOT_PREC.grib2.bz2"
+            wget -O tot_prec_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "tot_prec_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f tot_prec_${i_padded}.grib2.bz2
+            fi
+          '
+
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_TOT_PREC.grib2.bz2"
             wget -O tot_prec_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
@@ -95,8 +120,16 @@ jobs:
         run: |
           mkdir -p data/wind
           cd data/wind
-          (echo $(seq 0 77) $(seq 78 3 120)) | tr ' ' '\n' | \ 
-          xargs -n 1 -P 14 -I{} bash -c '
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c
+            i_padded=$(printf "%03d" {} )
+            URL="https://opendata.dwd.de/weather/nwp/icon-d2/grib/${{ env.RUN }}/vmax_10m/icon-d2_germany_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_VMAX_10M.grib2.bz2"
+            wget -O wind_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "wind_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f wind_${i_padded}.grib2.bz2
+            fi
+          '
+
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c
             i_padded=$(printf "%03d" {} )
             URL="https://opendata.dwd.de/weather/nwp/icon-d2/grib/${{ env.RUN }}/vmax_10m/icon-d2_germany_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_VMAX_10M.grib2.bz2"
             wget -O wind_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
@@ -109,8 +142,16 @@ jobs:
         run: |
           mkdir -p data/snow
           cd data/snow
-          (echo $(seq 0 77) $(seq 78 3 120)) | tr ' ' '\n' | \ 
-          xargs -n 1 -P 14 -I{} bash -c '
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c'
+            i_padded=$(printf "%03d" {} )
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_H_SNOW.grib2.bz2"
+            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f snow_${i_padded}.grib2.bz2
+            fi
+          '
+
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c'
             i_padded=$(printf "%03d" {} )
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_H_SNOW.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
@@ -123,8 +164,16 @@ jobs:
         run: |
           mkdir -p data/snowfall
           cd data/snowfall
-          (echo $(seq 0 77) $(seq 78 3 120)) | tr ' ' '\n' | \ 
-          xargs -n 1 -P 14 -I{} bash -c 
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c'
+            i_padded=$(printf "%03d" {} )
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_h_snow.grib2.bz2"
+            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f snow_${i_padded}.grib2.bz2
+            fi
+          '
+
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c'
             i_padded=$(printf "%03d" {} )
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_2d_h_snow.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
@@ -135,11 +184,11 @@ jobs:
 
       - name: Generate PNGs
         run: |
-          mkdir -p icond2/${{ env.RUN }}/t2m
-          mkdir -p icond2/${{ env.RUN }}/ww
-          mkdir -p icond2/${{ env.RUN }}/tp_acc
-          mkdir -p icond2/${{ env.RUN }}/wind
-          mkdir -p icond2/${{ env.RUN }}/snow
+          mkdir -p iconeu/${{ env.RUN }}/t2m
+          mkdir -p iconeu/${{ env.RUN }}/ww
+          mkdir -p iconeu/${{ env.RUN }}/tp_acc
+          mkdir -p iconeu/${{ env.RUN }}/wind
+          mkdir -p iconeu/${{ env.RUN }}/snow
           mkdir -p iconeu/${{ env.RUN }}/snowfall
 
           python scripts/generate_pngs.py data/t2m iconeu/${{ env.RUN }}/t2m t2m
@@ -181,7 +230,7 @@ jobs:
         run: |
           for run_folder in $(aws s3 ls s3://${{ secrets.R2_BUCKET }}/icon-eu/ --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com | awk '{print $2}' | sed 's#/##'); do
             if [ "$run_folder" != "${{ needs.fetch_and_generate.outputs.run }}/" ]; then
-              aws s3 rm s3://${{ secrets.R2_BUCKET }}/icon-d2/$run_folder --recursive --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+              aws s3 rm s3://${{ secrets.R2_BUCKET }}/icon-eu/$run_folder --recursive --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
             fi
           done
         env:
