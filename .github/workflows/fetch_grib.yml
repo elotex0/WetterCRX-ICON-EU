@@ -191,12 +191,14 @@ jobs:
           mkdir -p iconeu/${{ env.RUN }}/snow
           mkdir -p iconeu/${{ env.RUN }}/snowfall
 
-          python scripts/generate_pngs.py data/t2m iconeu/${{ env.RUN }}/t2m t2m
-          python scripts/generate_pngs.py data/ww iconeu/${{ env.RUN }}/ww ww
-          python scripts/generate_pngs.py data/tp iconeu/${{ env.RUN }}/tp_acc tp_acc
-          python scripts/generate_pngs.py data/wind iconeu/${{ env.RUN }}/wind wind
-          python scripts/generate_pngs.py data/snow iconeu/${{ env.RUN }}/snow snow
-          python scripts/generate_pngs.py data/snowfall iconeu/${{ env.RUN }}/snowfall snowfall
+          python scripts/generate_pngs.py data/t2m iconeu/${{ env.RUN }}/t2m t2m &
+          python scripts/generate_pngs.py data/ww iconeu/${{ env.RUN }}/ww ww &
+          python scripts/generate_pngs.py data/tp iconeu/${{ env.RUN }}/tp_acc tp_acc &
+          python scripts/generate_pngs.py data/wind iconeu/${{ env.RUN }}/wind wind &
+          wait
+          python scripts/generate_pngs.py data/snow iconeu/${{ env.RUN }}/snow snow &
+          python scripts/generate_pngs.py data/snowfall iconeu/${{ env.RUN }}/snowfall snowfall &
+          wait
 
       - name: Upload PNGs as artifact
         uses: actions/upload-artifact@v4
