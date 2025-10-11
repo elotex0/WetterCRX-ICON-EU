@@ -21,6 +21,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 data_dir = sys.argv[1]        # z.B. "output"
 output_dir = sys.argv[2]      # z.B. "output/maps"
 var_type = sys.argv[3]        # 't2m', 'ww', 'tp', 'tp_acc', 'cape_ml', 'dbz_cmax'
+shapefile_dir = sys.argv[4]
 os.makedirs(output_dir, exist_ok=True)
 
 # ------------------------------
