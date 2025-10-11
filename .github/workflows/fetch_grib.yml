@@ -182,9 +182,6 @@ jobs:
             fi
           '
 
-      - name: Download Cartopy Shapefiles
-        run: python scripts/download_shapefiles.py
-
       - name: Generate PNGs
         run: |
           mkdir -p iconeu/${{ env.RUN }}/t2m
