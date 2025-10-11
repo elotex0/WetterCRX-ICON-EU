@@ -20,7 +20,6 @@ jobs:
         with:
           python-version: '3.11'
 
-
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
@@ -43,10 +42,8 @@ jobs:
             21|22|23) RUN=18 ;;
           esac
           DATE=$(date -u +%Y%m%d)
-          # set env variables
           echo "RUN=$RUN" >> $GITHUB_ENV
           echo "DATE=$DATE" >> $GITHUB_ENV
-          # set step output for job output
           echo "run=$RUN" >> $GITHUB_OUTPUT
 
       - name: Download t2m GRIB2 files
@@ -61,7 +58,6 @@ jobs:
               bunzip2 -f t2m_${i_padded}.grib2.bz2
             fi
           '
-
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
             i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/t_2m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_T_2M.grib2.bz2"
@@ -70,8 +66,7 @@ jobs:
               bunzip2 -f t2m_${i_padded}.grib2.bz2
             fi
           '
-          
-      
+
       - name: Download ww GRIB2 files
         run: |
           mkdir -p data/ww
@@ -84,8 +79,7 @@ jobs:
               bunzip2 -f ww_${i_padded}.grib2.bz2
             fi
           '
-
-           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
             i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/ww/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_WW.grib2.bz2"
             wget -O ww_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
@@ -93,7 +87,7 @@ jobs:
               bunzip2 -f ww_${i_padded}.grib2.bz2
             fi
           '
-      
+
       - name: Download tp GRIB2 files
         run: |
           mkdir -p data/tp
@@ -106,7 +100,6 @@ jobs:
               bunzip2 -f tot_prec_${i_padded}.grib2.bz2
             fi
           '
-
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
             i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_TOT_PREC.grib2.bz2"
@@ -116,12 +109,20 @@ jobs:
             fi
           '
 
-      - name: Download vmax_10m GRIB2 files
+      - name: Download wind GRIB2 files
         run: |
           mkdir -p data/wind
           cd data/wind
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
+            i_padded=$(printf "%03d" {})
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/vmax_10m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_VMAX_10M.grib2.bz2"
+            wget -O wind_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "wind_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f wind_${i_padded}.grib2.bz2
+            fi
+          '
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
+            i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/vmax_10m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_VMAX_10M.grib2.bz2"
             wget -O wind_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "wind_${i_padded}.grib2.bz2" ]; then
@@ -129,30 +130,20 @@ jobs:
             fi
           '
 
-          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/vmax_10m/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_VMAX_10M.grib2.bz2"
-            wget -O wind_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "wind_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f wind_${i_padded}.grib2.bz2
-            fi
-          '
-          
-      - name: Download sde GRIB2 files
+      - name: Download snow GRIB2 files
         run: |
           mkdir -p data/snow
           cd data/snow
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
+            i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_H_SNOW.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "snow_${i_padded}.grib2.bz2" ]; then
               bunzip2 -f snow_${i_padded}.grib2.bz2
             fi
           '
-
           seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
+            i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_H_SNOW.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "snow_${i_padded}.grib2.bz2" ]; then
@@ -165,7 +156,15 @@ jobs:
           mkdir -p data/snowfall
           cd data/snowfall
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
+            i_padded=$(printf "%03d" {})
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/snowlmt/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_SNOWLMT.grib2.bz2"
+            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f snow_${i_padded}.grib2.bz2
+            fi
+          '
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
+            i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/snowlmt/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_SNOWLMT.grib2.bz2"
             wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
             if [ -f "snow_${i_padded}.grib2.bz2" ]; then
@@ -173,24 +172,32 @@ jobs:
             fi
           '
 
-          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/snowlmt/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_SNOWLMT.grib2.bz2"
-            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f snow_${i_padded}.grib2.bz2
-            fi
-          '
+      - name: Download Cartopy Shapefiles
+        run: |
+          mkdir -p data/shapefiles
+          python - <<EOF
+import cartopy.io.shapereader as shp
+shp_path = shp.natural_earth(
+    resolution='10m', 
+    category='physical', 
+    name='coastline', 
+    data_dir='data/shapefiles'
+)
+print(f"Shapefile downloaded to: {shp_path}")
+EOF
 
       - name: Generate PNGs
         run: |
-
-          mkdir -p iconeu/${{ env.RUN }}/t2m && python scripts/generate_pngs.py data/t2m iconeu/${{ env.RUN }}/t2m t2m &
-          mkdir -p iconeu/${{ env.RUN }}/ww && python scripts/generate_pngs.py data/ww iconeu/${{ env.RUN }}/ww ww &
-          mkdir -p iconeu/${{ env.RUN }}/tp_acc && python scripts/generate_pngs.py data/tp iconeu/${{ env.RUN }}/tp_acc tp_acc &
-          mkdir -p iconeu/${{ env.RUN }}/wind && python scripts/generate_pngs.py data/wind iconeu/${{ env.RUN }}/wind wind &
-          mkdir -p iconeu/${{ env.RUN }}/snow && python scripts/generate_pngs.py data/snow iconeu/${{ env.RUN }}/snow snow &
-          mkdir -p iconeu/${{ env.RUN }}/snowfall && python scripts/generate_pngs.py data/snowfall iconeu/${{ env.RUN }}/snowfall snowfall &
+          set -e
+          for type in t2m ww tp_acc wind snow snowfall; do
+              mkdir -p iconeu/${{ env.RUN }}/$type
+          done
+          python scripts/generate_pngs.py data/t2m iconeu/${{ env.RUN }}/t2m t2m data/shapefiles &
+          python scripts/generate_pngs.py data/ww iconeu/${{ env.RUN }}/ww ww data/shapefiles &
+          python scripts/generate_pngs.py data/tp iconeu/${{ env.RUN }}/tp_acc tp_acc data/shapefiles &
+          python scripts/generate_pngs.py data/wind iconeu/${{ env.RUN }}/wind wind data/shapefiles &
+          python scripts/generate_pngs.py data/snow iconeu/${{ env.RUN }}/snow snow data/shapefiles &
+          python scripts/generate_pngs.py data/snowfall iconeu/${{ env.RUN }}/snowfall snowfall data/shapefiles &
           wait
 
       - name: Upload PNGs as artifact
@@ -199,8 +206,6 @@ jobs:
           name: iconeu
           path: iconeu
 
-
-        # --------- Delete GRIB2 Files ---------
       - name: Delete GRIB2 files
         run: rm -rf data/
 
@@ -234,11 +239,8 @@ jobs:
 
       - name: Upload current run and metadata.json to R2
         run: |
-          # Upload run folder
           aws s3 sync ./iconeu/${{ needs.fetch_and_generate.outputs.run }}/ s3://${{ secrets.R2_BUCKET }}/icon-eu/${{ needs.fetch_and_generate.outputs.run }}/ \
             --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
-
-          # Upload metadata.json outside run folder
           aws s3 cp ./iconeu/metadata.json s3://${{ secrets.R2_BUCKET }}/icon-eu/metadata.json \
             --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
         env:
