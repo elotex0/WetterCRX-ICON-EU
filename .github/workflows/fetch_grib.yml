@@ -223,17 +223,17 @@ jobs:
 
       - name: Generate PNGs for ${{ matrix.variable }}
         run: |
-          mkdir -p iconeu/${{ needs.fetch_and_generate.outputs.run }}/${{ matrix.variable }}
+          mkdir -p iconeu/${{ matrix.variable }}
           python scripts/generate_pngs.py \
             data/${{ matrix.variable }} \
-            iconeu/${{ needs.fetch_and_generate.outputs.run }}/${{ matrix.variable }} \
+            iconeu/${{ matrix.variable }} \
             ${{ matrix.variable }}
 
       - name: Upload PNGs artifact
         uses: actions/upload-artifact@v4
         with:
           name: iconeu-${{ matrix.variable }}
-          path: iconeu/${{ needs.fetch_and_generate.outputs.run }}/${{ matrix.variable }}
+          path: iconeu/${{ matrix.variable }}
 
   # -------------------------------------------------------
   # 3️⃣ Merge PNGs + Deploy to R2
@@ -255,18 +255,12 @@ jobs:
           mkdir -p iconeu/${{ needs.fetch_and_generate.outputs.run }}
           for d in iconeu_raw/*; do
             if [ -d "$d" ]; then
-              echo "Merging $d ..."
-              # Finde automatisch den Variablen-Unterordner (z. B. t2m, ww, wind)
-              inner=$(find "$d" -mindepth 2 -maxdepth 2 -type d | head -n 1)
-              if [ -n "$inner" ]; then
-                varname=$(basename "$inner")
-                mkdir -p iconeu/${{ needs.fetch_and_generate.outputs.run }}/"$varname"
-                cp -r "$inner"/* iconeu/${{ needs.fetch_and_generate.outputs.run }}/"$varname"/ || true
-              else
-                echo "⚠️ Kein gültiger Unterordner in $d gefunden"
-              fi
+              varname=$(basename "$d" | sed 's/^iconeu-//')  # entfernt "iconeu-" Prefix
+              mkdir -p iconeu/${{ needs.fetch_and_generate.outputs.run }}/"$varname"
+              cp -r "$d"/* iconeu/${{ needs.fetch_and_generate.outputs.run }}/"$varname"/ || true
             fi
           done
+
 
           echo "Merged structure:"
           ls -R iconeu/${{ needs.fetch_and_generate.outputs.run }}
