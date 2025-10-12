@@ -248,6 +248,7 @@ jobs:
       - name: Download all PNG artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: iconeu-*
           path: iconeu_raw
 
       - name: Merge PNG folders into one structure
