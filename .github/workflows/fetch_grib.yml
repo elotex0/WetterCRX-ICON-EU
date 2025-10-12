@@ -4,10 +4,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  # -------------------------------------------------------
+  # 1️⃣ Fetch all GRIB2 data
+  # -------------------------------------------------------
   fetch_and_generate:
     runs-on: ubuntu-latest
     outputs:
       run: ${{ steps.set_run_date.outputs.run }}
+      date: ${{ steps.set_run_date.outputs.date }}
 
     steps:
       - name: Checkout Repo
@@ -20,7 +24,6 @@ jobs:
         with:
           python-version: '3.11'
 
-
       - name: Cache Python packages
         uses: actions/cache@v3
         with:
@@ -28,7 +31,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: pip install -r requirements.txt
 
@@ -43,13 +46,12 @@ jobs:
             21|22|23) RUN=18 ;;
           esac
           DATE=$(date -u +%Y%m%d)
-          # set env variables
           echo "RUN=$RUN" >> $GITHUB_ENV
           echo "DATE=$DATE" >> $GITHUB_ENV
-          # set step output for job output
           echo "run=$RUN" >> $GITHUB_OUTPUT
+          echo "date=$DATE" >> $GITHUB_OUTPUT
 
-      - name: Download t2m GRIB2 files
+            - name: Download t2m GRIB2 files
         run: |
           mkdir -p data/t2m
           cd data/t2m
@@ -182,55 +184,97 @@ jobs:
             fi
           '
 
-      - name: Generate PNGs
-        run: |
-          mkdir -p iconeu/${{ env.RUN }}/t2m
-          mkdir -p iconeu/${{ env.RUN }}/ww
-          mkdir -p iconeu/${{ env.RUN }}/tp_acc
-          mkdir -p iconeu/${{ env.RUN }}/wind
-          mkdir -p iconeu/${{ env.RUN }}/snow
-          mkdir -p iconeu/${{ env.RUN }}/snowfall
-
-          python scripts/generate_pngs.py data/t2m iconeu/${{ env.RUN }}/t2m t2m
-          python scripts/generate_pngs.py data/ww iconeu/${{ env.RUN }}/ww ww
-          python scripts/generate_pngs.py data/tp iconeu/${{ env.RUN }}/tp_acc tp_acc
-          python scripts/generate_pngs.py data/wind iconeu/${{ env.RUN }}/wind wind
-          python scripts/generate_pngs.py data/snow iconeu/${{ env.RUN }}/snow snow
-          python scripts/generate_pngs.py data/snowfall iconeu/${{ env.RUN }}/snowfall snowfall
-
-      - name: Upload PNGs as artifact
+      - name: Upload GRIB2 as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: iconeu
-          path: iconeu
+          name: grib2
+          path: data/
 
-
-        # --------- Delete GRIB2 Files ---------
-      - name: Delete GRIB2 files
+      - name: Delete GRIB2 files (local cleanup)
         run: rm -rf data/
 
-  deploy_to_r2:
+  # -------------------------------------------------------
+  # 2️⃣ Generate PNGs in parallel (matrix)
+  # -------------------------------------------------------
+  generate_pngs:
     runs-on: ubuntu-latest
     needs: fetch_and_generate
+    strategy:
+      matrix:
+        variable: [t2m, ww, tp_acc, wind, snow, snowfall]
+      max-parallel: 6
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Download PNGs artifact
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download GRIB2 artifact
         uses: actions/download-artifact@v4
         with:
-          name: iconeu
-          path: ./iconeu
+          name: grib2
+          path: data/
+
+      - name: Generate PNGs for ${{ matrix.variable }}
+        run: |
+          mkdir -p iconeu/${{ needs.fetch_and_generate.outputs.run }}/${{ matrix.variable }}
+          python scripts/generate_pngs.py \
+            data/${{ matrix.variable }} \
+            iconeu/${{ needs.fetch_and_generate.outputs.run }}/${{ matrix.variable }} \
+            ${{ matrix.variable }}
+
+      - name: Upload PNGs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iconeu-${{ matrix.variable }}
+          path: iconeu/${{ needs.fetch_and_generate.outputs.run }}/${{ matrix.variable }}
+
+  # -------------------------------------------------------
+  # 3️⃣ Merge PNGs + Deploy to R2
+  # -------------------------------------------------------
+  deploy_to_r2:
+    runs-on: ubuntu-latest
+    needs: [fetch_and_generate, generate_pngs]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Download all PNG artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: iconeu_raw
+
+      - name: Merge PNG folders into one structure
+        run: |
+          mkdir -p iconeu/${{ needs.fetch_and_generate.outputs.run }}
+          for d in iconeu_raw/*; do
+            if [ -d "$d" ]; then
+              echo "Merging $d ..."
+              cp -r "$d"/${{ needs.fetch_and_generate.outputs.run }}/* iconeu/${{ needs.fetch_and_generate.outputs.run }}/ || true
+            fi
+          done
+          ls -R iconeu/${{ needs.fetch_and_generate.outputs.run }}
 
       - name: Generate Metadata
         run: |
-          python scripts/generate_metadata.py iconeu/${{ needs.fetch_and_generate.outputs.run }} ${{ needs.fetch_and_generate.outputs.run }} ${{ env.DATE }}
+          python scripts/generate_metadata.py \
+            iconeu/${{ needs.fetch_and_generate.outputs.run }} \
+            ${{ needs.fetch_and_generate.outputs.run }} \
+            ${{ needs.fetch_and_generate.outputs.date }}
 
       - name: Clean old runs on R2 except current
         run: |
-          for run_folder in $(aws s3 ls s3://${{ secrets.R2_BUCKET }}/icon-eu/ --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com | awk '{print $2}' | sed 's#/##'); do
+          for run_folder in $(aws s3 ls s3://${{ secrets.R2_BUCKET }}/icon-eu/ \
+            --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com | awk '{print $2}' | sed 's#/##'); do
             if [ "$run_folder" != "${{ needs.fetch_and_generate.outputs.run }}/" ]; then
-              aws s3 rm s3://${{ secrets.R2_BUCKET }}/icon-eu/$run_folder --recursive --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+              aws s3 rm s3://${{ secrets.R2_BUCKET }}/icon-eu/$run_folder --recursive \
+                --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
             fi
           done
         env:
@@ -239,12 +283,12 @@ jobs:
 
       - name: Upload current run and metadata.json to R2
         run: |
-          # Upload run folder
-          aws s3 sync ./iconeu/${{ needs.fetch_and_generate.outputs.run }}/ s3://${{ secrets.R2_BUCKET }}/icon-eu/${{ needs.fetch_and_generate.outputs.run }}/ \
+          aws s3 sync ./iconeu/${{ needs.fetch_and_generate.outputs.run }}/ \
+            s3://${{ secrets.R2_BUCKET }}/icon-eu/${{ needs.fetch_and_generate.outputs.run }}/ \
             --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
-          # Upload metadata.json outside run folder
-          aws s3 cp ./iconeu/metadata.json s3://${{ secrets.R2_BUCKET }}/icon-eu/metadata.json \
+          aws s3 cp ./iconeu/metadata.json \
+            s3://${{ secrets.R2_BUCKET }}/icon-eu/metadata.json \
             --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
