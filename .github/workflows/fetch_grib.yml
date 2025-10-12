@@ -256,9 +256,19 @@ jobs:
           for d in iconeu_raw/*; do
             if [ -d "$d" ]; then
               echo "Merging $d ..."
-              cp -r "$d"/${{ needs.fetch_and_generate.outputs.run }}/* iconeu/${{ needs.fetch_and_generate.outputs.run }}/ || true
+              # Finde automatisch den Variablen-Unterordner (z. B. t2m, ww, wind)
+              inner=$(find "$d" -mindepth 2 -maxdepth 2 -type d | head -n 1)
+              if [ -n "$inner" ]; then
+                varname=$(basename "$inner")
+                mkdir -p iconeu/${{ needs.fetch_and_generate.outputs.run }}/"$varname"
+                cp -r "$inner"/* iconeu/${{ needs.fetch_and_generate.outputs.run }}/"$varname"/ || true
+              else
+                echo "⚠️ Kein gültiger Unterordner in $d gefunden"
+              fi
             fi
           done
+
+          echo "Merged structure:"
           ls -R iconeu/${{ needs.fetch_and_generate.outputs.run }}
 
       - name: Generate Metadata
