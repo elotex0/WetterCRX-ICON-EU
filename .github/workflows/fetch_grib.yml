@@ -99,7 +99,7 @@ jobs:
       - name: Download tp GRIB2 files
         run: |
           mkdir -p data/tp_acc
-          cd data/tp
+          cd data/tp_acc
           seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
             i_padded=$(printf "%03d" {})
             URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/tot_prec/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_TOT_PREC.grib2.bz2"
