@@ -51,7 +51,7 @@ jobs:
           echo "run=$RUN" >> $GITHUB_OUTPUT
           echo "date=$DATE" >> $GITHUB_OUTPUT
 
-            - name: Download t2m GRIB2 files
+      - name: Download t2m GRIB2 files
         run: |
           mkdir -p data/t2m
           cd data/t2m
