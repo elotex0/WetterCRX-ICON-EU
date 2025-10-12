@@ -201,7 +201,7 @@ jobs:
     needs: fetch_and_generate
     strategy:
       matrix:
-        variable: [t2m, ww, tp_acc, wind, snow, snowfall]
+        variable: [t2m, ww, tp, wind, snow, snowfall]
       max-parallel: 6
     steps:
       - name: Checkout Repo
