@@ -186,6 +186,32 @@ snowfall_colors = ListedColormap([
 snowfall_norm = mcolors.BoundaryNorm(snowfall_bounds, snowfall_colors.N)
 
 # ------------------------------
+# Luftdruck
+# ------------------------------
+
+# Beschriftungs-Bounds
+pmsl_bounds_labels = list(range(910, 1060, 2))
+
+# Farb-Bounds alle 5 hPa
+pmsl_bounds_colors = list(range(910, 1060, 5))  # 935, 940, 945, 950, 955, ...
+
+# Smooth-Farbverlauf
+pmsl_colors = mcolors.LinearSegmentedColormap.from_list(
+    "pmsl_smooth",
+    [
+        "#FF33AA", "#9B00FF", "#3F00FF",        
+        "#007BFF", "#00FF1E", "#FF9900",        
+        "#FF0000", "#FFFFFF"
+                         
+    ],
+    N=len(pmsl_bounds_colors)
+)
+
+# Norm für pcolormesh
+pmsl_cmap = pmsl_colors
+pmsl_norm = mcolors.BoundaryNorm(pmsl_bounds_colors, ncolors=len(pmsl_bounds_colors))
+
+# ------------------------------
 # Kartenparameter
 # ------------------------------
 FIG_W_PX, FIG_H_PX = 880, 830
@@ -302,6 +328,12 @@ for filename in sorted(os.listdir(data_dir)):
             continue
         data = ds["SNOWLMT"].values
         data[data < 0] = np.nan
+    elif var_type == "pmsl":
+        if "prmsl" not in ds:
+            print(f"Keine prmsl-Variable in {filename} ds.keys(): {list(ds.keys())}")
+            continue
+        data = ds["prmsl"].values / 100
+        data[data < 0] = np.nan
     else:
         print(f"Unbekannter var_type {var_type}")
         continue
@@ -363,6 +395,44 @@ for filename in sorted(os.listdir(data_dir)):
         im = ax.pcolormesh(lon, lat, data, cmap=twater_colors, norm=twater_norm, shading="auto")
     elif var_type == "snowfall":
         im = ax.pcolormesh(lon, lat, data, cmap=snowfall_colors, norm=BoundaryNorm(snowfall_bounds, snowfall_colors.N), shading="auto")
+    elif var_type == "pmsl":
+        im = ax.pcolormesh(lon, lat, data, cmap=pmsl_cmap, norm=pmsl_norm, shading="auto")
+        # pmsl Daten in hPa
+        data_hpa = data  # data schon in hPa
+
+        # Haupt-Isobaren (alle 5 hPa)
+        main_levels = list(range(910, 1060, 5))
+        # Feine Isobaren (alle 1 hPa)
+        fine_levels = list(range(910, 1060, 2))
+
+        # feine Isobaren dünn/grau
+        ax.contour(lon, lat, data_hpa, levels=fine_levels, colors='white', linewidths=0.5, alpha=0.7)
+
+        # Haupt-Isobaren dick/schwarz
+        cs = ax.contour(lon, lat, data_hpa, levels=main_levels, colors='white', linewidths=1.0, alpha=1)
+
+        # Hauptlevels beschriften
+        for level in main_levels:
+            fontsize = 10 if level <= 999 or level >= 1030 else 7
+            txts = ax.clabel(cs, levels=[level], inline=False, fmt='%d', fontsize=fontsize)
+            # Pfad-Effekt für weiße Umrandung bei Extremwerten
+            for txt in txts:
+                val = float(txt.get_text())
+                if val <= 999 or val >= 1030:
+                    txt.set_fontweight('bold')
+                txt.set_color('black')
+                txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground='white')])
+
+        # feine Extremwerte (<1000 oder >1030) beschriften
+        cs_fine = ax.contour(lon, lat, data_hpa, levels=fine_levels, colors='grey', linewidths=0)
+        for level in fine_levels:
+            if level <= 999 or level >= 1030:
+                txts = ax.clabel(cs_fine, levels=[level], inline=False, fmt='%d', fontsize=10)
+                for txt in txts:
+                    txt.set_fontweight('bold')
+                    txt.set_color('black')
+                    txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground='white')])
+
 
     # Bundesländer-Grenzen aus Cartopy (statt GeoJSON)
     ax.add_feature(cfeature.STATES.with_scale("10m"), edgecolor="#2C2C2C", linewidth=1)
@@ -379,8 +449,8 @@ for filename in sorted(os.listdir(data_dir)):
     # Legende
     legend_h_px = 50
     legend_bottom_px = 45
-    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall"]:
-        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else cape_bounds if var_type=="cape_ml" else dbz_bounds if var_type=="dbz_cmax" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else cloud_bounds if var_type=="cloud" else twater_bounds if var_type=="twater" else snowfall_bounds
+    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall", "pmsl"]:
+        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else cape_bounds if var_type=="cape_ml" else dbz_bounds if var_type=="dbz_cmax" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else cloud_bounds if var_type=="cloud" else twater_bounds if var_type=="twater" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors 
         cbar_ax = fig.add_axes([0.03, legend_bottom_px / FIG_H_PX, 0.94, legend_h_px / FIG_H_PX])
         cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal", ticks=bounds)
         cbar.ax.tick_params(colors="black", labelsize=7)
@@ -408,7 +478,8 @@ for filename in sorted(os.listdir(data_dir)):
         "wind": "Windböen (km/h)",
         "snow": "Schneehöhe (cm)",
         "twater": "Gesamtwassergehalt (mm)",
-        "snowfall": "Schneefallgrenze (m)"
+        "snowfall": "Schneefallgrenze (m)",
+        "pmsl": "Luftdruck auf Meereshöhe (hPa)"
     }
 
     left_text = footer_texts.get(var_type, var_type) + \
