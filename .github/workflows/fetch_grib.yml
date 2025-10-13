@@ -184,6 +184,28 @@ jobs:
             fi
           '
 
+      - name: Download pmsl GRIB2 files
+        run: |
+          mkdir -p data/pmsl
+          cd data/pmsl
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
+            i_padded=$(printf "%03d" {} )
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/pmsl/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_PMSL.grib2.bz2"
+            wget -O pmsl_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "pmsl_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f pmsl_${i_padded}.grib2.bz2
+            fi
+          '
+
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
+            i_padded=$(printf "%03d" {} )
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/pmsl/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_PMSL.grib2.bz2"
+            wget -O pmsl_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "pmsl_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f pmsl_${i_padded}.grib2.bz2
+            fi
+          '
+
       - name: Upload GRIB2 as artifact
         uses: actions/upload-artifact@v4
         with:
@@ -201,8 +223,8 @@ jobs:
     needs: fetch_and_generate
     strategy:
       matrix:
-        variable: [t2m, ww, tp_acc, wind, snow, snowfall]
-      max-parallel: 6
+        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl]
+      max-parallel: 7
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
