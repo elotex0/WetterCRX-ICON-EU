@@ -189,27 +189,22 @@ snowfall_norm = mcolors.BoundaryNorm(snowfall_bounds, snowfall_colors.N)
 # Luftdruck
 # ------------------------------
 
-# Beschriftungs-Bounds
-pmsl_bounds_labels = list(range(910, 1060, 2))
-
-# Farb-Bounds alle 5 hPa
-pmsl_bounds_colors = list(range(910, 1060, 5))  # 935, 940, 945, 950, 955, ...
-
-# Smooth-Farbverlauf
-pmsl_colors = mcolors.LinearSegmentedColormap.from_list(
+# Luftdruck-Farben (kontinuierlicher Farbverlauf für 45 Bins)
+pmsl_bounds_colors = list(range(920, 1060, 4))  # Alle 4 hPa (45 Bins)
+pmsl_colors = LinearSegmentedColormap.from_list(
     "pmsl_smooth",
     [
-        "#FF33AA", "#9B00FF", "#3F00FF",        
-        "#007BFF", "#00FF1E", "#FF9900",        
-        "#FF0000", "#FFFFFF"
-                         
+        "#C802CB", "#AA00A9",
+        "#2201AA", 
+        "#0066CB", "#0076CD", 
+        "#00BB22", "#11C501",  
+        "#FFCC00",  
+        "#FF6600", "#FF0000", 
+        "#FFFFFF", "#C1C1C1"
     ],
-    N=len(pmsl_bounds_colors)
+    N=len(pmsl_bounds_colors)  # Genau 45 Farben für 45 Bins
 )
-
-# Norm für pcolormesh
-pmsl_cmap = pmsl_colors
-pmsl_norm = mcolors.BoundaryNorm(pmsl_bounds_colors, ncolors=len(pmsl_bounds_colors))
+pmsl_norm = BoundaryNorm(pmsl_bounds_colors, ncolors=len(pmsl_bounds_colors))
 
 # ------------------------------
 # Kartenparameter
@@ -396,42 +391,37 @@ for filename in sorted(os.listdir(data_dir)):
     elif var_type == "snowfall":
         im = ax.pcolormesh(lon, lat, data, cmap=snowfall_colors, norm=BoundaryNorm(snowfall_bounds, snowfall_colors.N), shading="auto")
     elif var_type == "pmsl":
-        im = ax.pcolormesh(lon, lat, data, cmap=pmsl_cmap, norm=pmsl_norm, shading="auto")
-        # pmsl Daten in hPa
+    # Luftdruck-Daten
+        im = ax.pcolormesh(lon, lat, data, cmap=pmsl_colors, norm=pmsl_norm, shading="auto")
         data_hpa = data  # data schon in hPa
 
-        # Haupt-Isobaren (alle 5 hPa)
-        main_levels = list(range(910, 1060, 5))
-        # Feine Isobaren (alle 1 hPa)
-        fine_levels = list(range(910, 1060, 2))
+        # Haupt-Isobaren (alle 4 hPa)
+        main_levels = list(range(920, 1060, 4))
+        # Feine Isobaren (alle 2 hPa)
+        fine_levels = list(range(920, 1060, 1))
 
-        # feine Isobaren dünn/grau
-        ax.contour(lon, lat, data_hpa, levels=fine_levels, colors='white', linewidths=0.5, alpha=0.7)
+        main_levels = [lev for lev in main_levels if data_hpa.min() <= lev <= data_hpa.max()]
+        fine_levels = [lev for lev in fine_levels if data_hpa.min() <= lev <= data_hpa.max()]
 
-        # Haupt-Isobaren dick/schwarz
-        cs = ax.contour(lon, lat, data_hpa, levels=main_levels, colors='white', linewidths=1.0, alpha=1)
+        # Feine Isobaren-Linien (transparent)
+        ax.contour(lon, lat, data_hpa, levels=fine_levels,
+                colors='white', linewidths=0.3, alpha=0.8)
+
+        # Unsichtbare Feine Isobaren zum Beschriften (volle Deckkraft)
+        cs_fine_labels = ax.contour(lon, lat, data_hpa, levels=fine_levels,
+                                    colors='none', linewidths=0)  # unsichtbar, nur zum Labeln
+
+        # Haupt-Isobaren (dick, schwarz)
+        cs_main = ax.contour(lon, lat, data_hpa, levels=main_levels,
+                            colors='white', linewidths=1.2, alpha=1)
 
         # Hauptlevels beschriften
-        for level in main_levels:
-            fontsize = 10 if level <= 999 or level >= 1030 else 7
-            txts = ax.clabel(cs, levels=[level], inline=False, fmt='%d', fontsize=fontsize)
-            # Pfad-Effekt für weiße Umrandung bei Extremwerten
-            for txt in txts:
-                val = float(txt.get_text())
-                if val <= 999 or val >= 1030:
-                    txt.set_fontweight('bold')
-                txt.set_color('black')
-                txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground='white')])
+        ax.clabel(cs_main, levels=main_levels, inline=True, fmt='%d', fontsize=10,
+                inline_spacing=1, rightside_up=True, use_clabeltext=True, colors='black')
 
-        # feine Extremwerte (<1000 oder >1030) beschriften
-        cs_fine = ax.contour(lon, lat, data_hpa, levels=fine_levels, colors='grey', linewidths=0)
-        for level in fine_levels:
-            if level <= 999 or level >= 1030:
-                txts = ax.clabel(cs_fine, levels=[level], inline=False, fmt='%d', fontsize=10)
-                for txt in txts:
-                    txt.set_fontweight('bold')
-                    txt.set_color('black')
-                    txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground='white')])
+        # Feinelevels beschriften (Text bleibt deckend)
+        ax.clabel(cs_fine_labels, levels=fine_levels, inline=True, fmt='%d', fontsize=10,
+                inline_spacing=1, rightside_up=True, use_clabeltext=True, colors='black')
 
 
     # Bundesländer-Grenzen aus Cartopy (statt GeoJSON)
@@ -459,7 +449,7 @@ for filename in sorted(os.listdir(data_dir)):
 
         # Für pmsl nur jeden 10. hPa Tick beschriften
         if var_type=="pmsl":
-            tick_labels = [str(tick) if tick % 10 == 0 else "" for tick in bounds]
+            tick_labels = [str(tick) if tick % 8 == 0 else "" for tick in bounds]
             cbar.set_ticklabels(tick_labels)
 
         if var_type=="tp_acc":
