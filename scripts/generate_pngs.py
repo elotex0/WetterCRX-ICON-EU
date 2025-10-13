@@ -457,6 +457,11 @@ for filename in sorted(os.listdir(data_dir)):
         cbar.outline.set_edgecolor("black")
         cbar.ax.set_facecolor("white")
 
+        # Für pmsl nur jeden 10. hPa Tick beschriften
+        if var_type=="pmsl":
+            tick_labels = [str(tick) if tick % 10 == 0 else "" for tick in bounds]
+            cbar.set_ticklabels(tick_labels)
+
         if var_type=="tp_acc":
             cbar.set_ticklabels([int(tick) if float(tick).is_integer() else tick for tick in tp_acc_bounds])
         if var_type=="snow":
