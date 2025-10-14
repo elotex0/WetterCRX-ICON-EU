@@ -194,11 +194,12 @@ pmsl_bounds_colors = list(range(912, 1070, 4))  # Alle 4 hPa (45 Bins)
 pmsl_colors = LinearSegmentedColormap.from_list(
     "pmsl_smooth",
     [
-        "#FF6DFF", "#C418C4", "#950CA2", "#5A007D", "#3D007F",
-        "#00337E", "#0472CB", "#4FABF8", "#A3D4FF", "#95DFBC",
-        "#07A220", "#3EC008", "#9EE002", "#F3FC01", "#F19806",
-        "#F74F11", "#B81212", "#8C3234", "#C87879", "#F9CBCD",
-        "#E2E2E2"
+       "#FF6DFF", "#C418C4", "#950CA2", "#5A007D", "#3D007F",
+       "#00337E", "#0472CB", "#4FABF8", "#A3D4FF", "#79DAAD",
+       "#07A220", "#3EC008", "#9EE002", "#F3FC01", "#F19806",
+       "#F74F11", "#B81212", "#8C3234", "#C87879", "#F9CBCD",
+       "#E2E2E2"
+
     ],
     N=len(pmsl_bounds_colors)  # Genau 45 Farben für 45 Bins
 )
