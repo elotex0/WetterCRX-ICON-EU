@@ -190,17 +190,15 @@ snowfall_norm = mcolors.BoundaryNorm(snowfall_bounds, snowfall_colors.N)
 # ------------------------------
 
 # Luftdruck-Farben (kontinuierlicher Farbverlauf für 45 Bins)
-pmsl_bounds_colors = list(range(920, 1060, 4))  # Alle 4 hPa (45 Bins)
+pmsl_bounds_colors = list(range(912, 1070, 4))  # Alle 4 hPa (45 Bins)
 pmsl_colors = LinearSegmentedColormap.from_list(
     "pmsl_smooth",
     [
-        "#C802CB", "#AA00A9",
-        "#2201AA", 
-        "#0066CB", "#0076CD", 
-        "#00BB22", "#11C501",  
-        "#FFCC00",  
-        "#FF6600", "#FF0000", 
-        "#FFFFFF", "#C1C1C1"
+        "#FF6DFF", "#C418C4", "#950CA2", "#5A007D", "#3D007F",
+        "#00337E", "#0472CB", "#4FABF8", "#A3D4FF", "#95DFBC",
+        "#07A220", "#3EC008", "#9EE002", "#F3FC01", "#F19806",
+        "#F74F11", "#B81212", "#8C3234", "#C87879", "#F9CBCD",
+        "#E2E2E2"
     ],
     N=len(pmsl_bounds_colors)  # Genau 45 Farben für 45 Bins
 )
@@ -396,9 +394,9 @@ for filename in sorted(os.listdir(data_dir)):
         data_hpa = data  # data schon in hPa
 
         # Haupt-Isobaren (alle 4 hPa)
-        main_levels = list(range(920, 1060, 4))
+        main_levels = list(range(912, 1070, 4))
         # Feine Isobaren (alle 2 hPa)
-        fine_levels = list(range(920, 1060, 1))
+        fine_levels = list(range(912, 1070, 1))
 
         main_levels = [lev for lev in main_levels if data_hpa.min() <= lev <= data_hpa.max()]
         fine_levels = [lev for lev in fine_levels if data_hpa.min() <= lev <= data_hpa.max()]
