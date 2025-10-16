@@ -385,7 +385,7 @@ for filename in sorted(os.listdir(data_dir)):
 
         
        # Abstand in Grad, innerhalb dessen keine Labels auf Städte gesetzt werden
-        min_city_dist = 0.9 
+        min_city_dist = 1.1 
 
         texts = []
         for i, j in chosen_indices:
@@ -456,7 +456,7 @@ for filename in sorted(os.listdir(data_dir)):
         used_points = set()  # global, für Haupt- und Feine-Isobaren
         texts = []  # Für adjust_text
 
-        min_city_dist = 0.9  # Abstand in Grad zu Städten
+        min_city_dist = 1.1  # Abstand in Grad zu Städten
 
         def place_random_labels(cs, n_labels):
             contour_points = []
