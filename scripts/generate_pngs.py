@@ -364,8 +364,10 @@ for filename in sorted(os.listdir(data_dir)):
     # Plot
     if var_type == "t2m":
         im = ax.pcolormesh(lon, lat, data, cmap=t2m_colors, norm=t2m_norm, shading="auto")
+
+        contours = ax.contour(lon, lat, data, levels=t2m_bounds, colors='black', linewidths=0.3, alpha=0.6)
         # Anzahl der Werte, die angezeigt werden sollen
-        n_labels = 25
+        n_labels = 40
         
         # 2D-Mesh für Maskierung
         lon2d, lat2d = np.meshgrid(lon, lat)
@@ -377,24 +379,25 @@ for filename in sorted(os.listdir(data_dir)):
         # Indizes der gültigen Punkte
         valid_indices = np.argwhere(valid_mask)
 
-        if len(valid_indices) > n_labels:
-            chosen_rows = np.random.choice(len(valid_indices), n_labels, replace=False)
-            chosen_indices = valid_indices[chosen_rows]
-        else:
-            chosen_indices = valid_indices
-
-        
        # Abstand in Grad, innerhalb dessen keine Labels auf Städte gesetzt werden
-        min_city_dist = 1.1 
-
+        np.random.shuffle(valid_indices)
+        min_city_dist = 1.0
+        used_points = 0
+        tried_points = set()
         texts = []
-        for i, j in chosen_indices:
+        while used_points < n_labels and len(tried_points) < len(valid_indices):
+            i, j = valid_indices[np.random.randint(0, len(valid_indices))]
+            if (i, j) in tried_points:
+                continue
+            tried_points.add((i, j))
+
             lon_pt, lat_pt = lon[j], lat[i]
-            
-            # Prüfen, ob der Punkt zu nah an einer Stadt liegt
+
+            # Prüfen, ob zu nah an einer Stadt
             if any(np.hypot(lon_pt - city_lon, lat_pt - city_lat) < min_city_dist
                 for city_lon, city_lat in zip(cities['lon'], cities['lat'])):
-                continue  # Punkt überspringen
+                # neuen Punkt versuchen – einfach continue
+                continue
             
             val = data[i, j]
             txt = ax.text(lon_pt, lat_pt, f"{val:.0f}", fontsize=8,
