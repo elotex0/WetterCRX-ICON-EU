@@ -9,6 +9,7 @@ from adjustText import adjust_text
 import matplotlib.colors as mcolors
 import matplotlib.patches as mpatches
 import matplotlib.patheffects as path_effects
+from scipy.interpolate import RegularGridInterpolator
 from zoneinfo import ZoneInfo
 import numpy as np
 from matplotlib.colors import ListedColormap, BoundaryNorm, LinearSegmentedColormap
@@ -360,6 +361,44 @@ for filename in sorted(os.listdir(data_dir)):
     ax.set_extent(extent)
     ax.set_axis_off()
     ax.set_aspect('auto')
+
+    # ---------------------------------
+    # 🔍 Interpolation auf feineres Raster (optional)
+    # ---------------------------------
+    target_res = 0.025  # Zielauflösung in Grad (~2.8 km)
+    lon_min, lon_max, lat_min, lat_max = extent
+    lon_new = np.arange(lon_min, lon_max + target_res, target_res)
+    lat_new = np.arange(lat_min, lat_max + target_res, target_res)
+    lon2d_new, lat2d_new = np.meshgrid(lon_new, lat_new)
+
+    # Nur interpolieren, wenn Daten reguläres 2D-Gitter haben
+    if lon.ndim == 1 and lat.ndim == 1 and data.ndim == 2:
+        try:
+            if var_type == "ww":
+                # 🧱 Kategorische Interpolation: nearest-neighbor
+                interp_func = RegularGridInterpolator(
+                    (lat[::-1], lon),
+                    data[::-1, :],
+                    method="nearest",          # <--- WICHTIG
+                    bounds_error=False,
+                    fill_value=np.nan
+                )
+            else:
+                # 🌈 Kontinuierliche Interpolation: linear
+                interp_func = RegularGridInterpolator(
+                    (lat[::-1], lon),
+                    data[::-1, :],
+                    method="linear",
+                    bounds_error=False,
+                    fill_value=np.nan
+                )
+
+            pts = np.array([lat2d_new.ravel(), lon2d_new.ravel()]).T
+            data = interp_func(pts).reshape(lat2d_new.shape)
+            lon, lat = lon_new, lat_new
+            lon2d, lat2d = lon2d_new, lat2d_new
+        except Exception as e:
+            print(f"Interpolation übersprungen ({e})")
 
     # Plot
     if var_type == "t2m":
