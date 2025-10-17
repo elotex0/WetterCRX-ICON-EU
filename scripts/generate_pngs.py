@@ -365,6 +365,8 @@ for filename in sorted(os.listdir(data_dir)):
     if var_type == "t2m":
         im = ax.pcolormesh(lon, lat, data, cmap=t2m_colors, norm=t2m_norm, shading="auto")
 
+        contours = ax.contour(lon, lat, data, levels=t2m_bounds, colors='black', linewidths=0.3, alpha=0.6)
+
         # Anzahl der Werte, die angezeigt werden sollen
         n_labels = 40
         
@@ -403,6 +405,7 @@ for filename in sorted(os.listdir(data_dir)):
                         ha='center', va='center', color='black', weight='bold')
             txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
             texts.append(txt)
+            used_points += 1
 
         # Labels automatisch verschieben, um Überlappungen zu vermeiden
         adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=dict(arrowstyle="-"))
