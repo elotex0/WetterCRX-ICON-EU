@@ -447,7 +447,7 @@ for filename in sorted(os.listdir(data_dir)):
             used_points += 1
 
         # Labels automatisch verschieben, um Überlappungen zu vermeiden
-        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=dict(arrowstyle="-"))
+        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=None)
         
     elif var_type == "ww":
         valid_mask = np.isfinite(data)
