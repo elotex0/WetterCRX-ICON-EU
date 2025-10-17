@@ -559,7 +559,7 @@ for filename in sorted(os.listdir(data_dir)):
         place_random_labels(cs_fine, n_labels=5)  # Feine Isobaren
 
         # adjust_text aufrufen, um Überlappungen zwischen Labels zu vermeiden
-        adjust_text(texts, ax=ax, expand_text=(1.2,1.2), arrowprops=dict(arrowstyle="-"))
+        adjust_text(texts, ax=ax, expand_text=(1.2,1.2), arrowprops=None)
 
     # Bundesländer-Grenzen aus Cartopy (statt GeoJSON)
     ax.add_feature(cfeature.STATES.with_scale("10m"), edgecolor="#2C2C2C", linewidth=1)
