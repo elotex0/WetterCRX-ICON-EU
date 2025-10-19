@@ -208,6 +208,8 @@ pmsl_colors = LinearSegmentedColormap.from_list(
 )
 pmsl_norm = BoundaryNorm(pmsl_bounds_colors, ncolors=len(pmsl_bounds_colors))
 
+
+
 # ------------------------------
 # Kartenparameter
 # ------------------------------
@@ -283,7 +285,7 @@ for filename in sorted(os.listdir(data_dir)):
         if "CAPE_ML" not in ds:
             print(f"Keine CAPE_ML-Variable in {filename} ds.keys(): {list(ds.keys())}")
             continue
-        data = ds["CAPE_ML"].values[0, :, :]
+        data = ds["CAPE_ML"].values
         data[data<0]=np.nan
     elif var_type == "dbz_cmax":
         if "DBZ_CMAX" not in ds:
@@ -447,7 +449,7 @@ for filename in sorted(os.listdir(data_dir)):
             used_points += 1
 
         # Labels automatisch verschieben, um Überlappungen zu vermeiden
-        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=None)
+        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=dict(arrowstyle="-"))
         
     elif var_type == "ww":
         valid_mask = np.isfinite(data)
@@ -516,9 +518,14 @@ for filename in sorted(os.listdir(data_dir)):
                 (contour_points[:,1] >= lat_min) & (contour_points[:,1] <= lat_max)
             contour_points = contour_points[mask]
 
-            # Indexe auf Raster finden
-            ij_points = [(np.abs(lat - lat_val).argmin(), np.abs(lon - lon_val).argmin()) 
-                        for lon_val, lat_val in contour_points]
+            lat_idx = np.searchsorted(lat, contour_points[:,1])
+            lon_idx = np.searchsorted(lon, contour_points[:,0])
+
+            # Clamping, um Indexfehler zu vermeiden
+            lat_idx = np.clip(lat_idx, 0, len(lat) - 1)
+            lon_idx = np.clip(lon_idx, 0, len(lon) - 1)
+
+            ij_points = list(zip(lat_idx, lon_idx))
 
             # Duplikate entfernen
             ij_points = list(dict.fromkeys(ij_points))
@@ -549,7 +556,7 @@ for filename in sorted(os.listdir(data_dir)):
             for i, j in chosen_points:
                 val = data_hpa[i, j]
                 txt = ax.text(lon[j], lat[i], f"{val:.0f}", fontsize=10,
-                            ha='center', va='center', color='black', weight='bold')
+                            ha='center', va='center', color='black')
                 txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
                 texts.append(txt)
                 used_points.add((i,j))
@@ -608,7 +615,6 @@ for filename in sorted(os.listdir(data_dir)):
         "t2m": "Temperatur 2m (°C)",
         "tp_acc": "Akkumulierter Niederschlag (mm)",
         "cape_ml": "CAPE-Index (J/kg)",
-        "dbz_cmax": "Sim. max. Radarreflektivität (dBZ)",
         "cloud": "Gesamtbewölkung (%)",
         "wind": "Windböen (km/h)",
         "snow": "Schneehöhe (cm)",
