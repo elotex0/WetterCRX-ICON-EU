@@ -599,8 +599,30 @@ for filename in sorted(os.listdir(data_dir)):
                 used_points.add((i,j))
 
         # Zufällige Labels platzieren
-        place_random_labels(cs_main, n_labels=5)  # Haupt-Isobaren
-        place_random_labels(cs_fine, n_labels=5)  # Feine Isobaren
+        place_random_labels(cs_main, n_labels=6)  # Haupt-Isobaren
+        place_random_labels(cs_fine, n_labels=6)  # Feine Isobaren
+
+        # Extremwerte bestimmen
+        min_val = np.min(data_hpa)
+        max_val = np.max(data_hpa)
+
+        # Positionen des minimalen und maximalen Werts finden
+        min_pos = np.unravel_index(np.argmin(data_hpa), data_hpa.shape)
+        max_pos = np.unravel_index(np.argmax(data_hpa), data_hpa.shape)
+
+        # Tief (blau)
+        txt_min = ax.text(lon[min_pos[1]], lat[min_pos[0]], f"{min_val:.0f}",
+                        fontsize=14, color='blue', ha='center', va='center')
+        txt_min.set_path_effects([path_effects.withStroke(linewidth=2, foreground="white")])
+        texts.append(txt_min)
+        used_points.add(min_pos)
+
+        # Hoch (rot)
+        txt_max = ax.text(lon[max_pos[1]], lat[max_pos[0]], f"{max_val:.0f}",
+                        fontsize=14, color='red', ha='center', va='center')
+        txt_max.set_path_effects([path_effects.withStroke(linewidth=2, foreground="white")])
+        texts.append(txt_max)
+        used_points.add(max_pos)
 
         # adjust_text aufrufen, um Überlappungen zwischen Labels zu vermeiden
         adjust_text(texts, ax=ax, expand_text=(1.2,1.2), arrowprops=None)
