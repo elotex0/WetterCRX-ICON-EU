@@ -442,14 +442,14 @@ for filename in sorted(os.listdir(data_dir)):
                 continue
             
             val = data[i, j]
-            txt = ax.text(lon_pt, lat_pt, f"{val:.0f}", fontsize=9,
-                        ha='center', va='center', color='black', weight='bold')
+            txt = ax.text(lon_pt, lat_pt, f"{val:.0f}", fontsize=10,
+                        ha='center', va='center', color='black')
             txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
             texts.append(txt)
             used_points += 1
 
         # Labels automatisch verschieben, um Überlappungen zu vermeiden
-        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=dict(arrowstyle="-"))
+        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=None)
         
     elif var_type == "ww":
         valid_mask = np.isfinite(data)
