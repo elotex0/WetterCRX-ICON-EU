@@ -223,7 +223,7 @@ jobs:
     needs: fetch_and_generate
     strategy:
       matrix:
-        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl]
+        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsel_eu]
       max-parallel: 7
     steps:
       - name: Checkout Repo
@@ -246,10 +246,15 @@ jobs:
       - name: Generate PNGs for ${{ matrix.variable }}
         run: |
           mkdir -p iconeu/${{ matrix.variable }}
+          input_dir="data/${{ matrix.variable }}"
+          if [ "${{ matrix.variable }}" = "pmsel_eu" ]; then
+            input_dir="data/pmsl"
+          fi
           python scripts/generate_pngs.py \
-            data/${{ matrix.variable }} \
-            iconeu/${{ matrix.variable }} \
-            ${{ matrix.variable }}
+            "$input_dir" \
+            "iconeu/${{ matrix.variable }}" \
+            "${{ matrix.variable }}"
+
 
       - name: Upload PNGs artifact
         uses: actions/upload-artifact@v4
