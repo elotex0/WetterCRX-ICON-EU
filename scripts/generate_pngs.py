@@ -37,6 +37,27 @@ cities = pd.DataFrame({
             11.08, 11.03, 12.37, 8.80, 6.99, 9.73]
 })
 
+eu_cities = pd.DataFrame({
+    'name': [
+        'Berlin', 'Oslo', 'Warschau',
+        'Lissabon', 'Madrid', 'Rom',
+        'Ankara', 'Helsinki', 'Reykjavik',
+        'London', 'Paris'
+    ],
+    'lat': [
+        52.52, 59.91, 52.23,
+        38.72, 40.42, 41.90,
+        39.93, 60.17, 64.13,
+        51.51, 48.85
+    ],
+    'lon': [
+        13.40, 10.75, 21.01,
+        -9.14, -3.70, 12.48,
+        32.86, 24.94, -21.82,
+        -0.13, 2.35
+    ]
+})
+
 ignore_codes = {4}
 
 # ------------------------------
@@ -221,6 +242,8 @@ TARGET_ASPECT = FIG_W_PX / TOP_AREA_PX
 # Bounding Box Deutschland (fix, keine GeoJSON nötig)
 extent = [5, 16, 47, 56]
 
+extent_eu = [-23.5, 45.0, 29.5, 68.4]
+
 # ------------------------------
 # WW-Legende Funktion
 # ------------------------------
@@ -333,6 +356,12 @@ for filename in sorted(os.listdir(data_dir)):
             continue
         data = ds["prmsl"].values / 100
         data[data < 0] = np.nan
+    elif var_type == "pmsl_eu":
+        if "prmsl" not in ds:
+            print(f"Keine prmsl-Variable in {filename} ds.keys(): {list(ds.keys())}")
+            continue
+        data = ds["prmsl"].values / 100
+        data[data < 0] = np.nan
     else:
         print(f"Unbekannter var_type {var_type}")
         continue
@@ -353,25 +382,44 @@ for filename in sorted(os.listdir(data_dir)):
     valid_time_local = valid_time_utc.tz_localize("UTC").astimezone(ZoneInfo("Europe/Berlin"))
 
     # --------------------------
-    # Figure
+    # Figure (Deutschland oder Europa)
     # --------------------------
-    scale = 0.9
-    fig = plt.figure(figsize=(FIG_W_PX/100*scale, FIG_H_PX/100*scale), dpi=100)
-    shift_up = 0.02
-    ax = fig.add_axes([0.0, BOTTOM_AREA_PX / FIG_H_PX + shift_up, 1.0, TOP_AREA_PX / FIG_H_PX],
-                      projection=ccrs.PlateCarree())
-    ax.set_extent(extent)
-    ax.set_axis_off()
-    ax.set_aspect('auto')
+    if var_type == "pmsl_eu":
+        scale = 0.9
+        fig = plt.figure(figsize=(FIG_W_PX/100*scale, FIG_H_PX/100*scale), dpi=100)
+        shift_up = 0.02
+        ax = fig.add_axes([0.0, BOTTOM_AREA_PX / FIG_H_PX + shift_up, 1.0, TOP_AREA_PX / FIG_H_PX],
+                        projection=ccrs.PlateCarree())
+        ax.set_extent(extent_eu)
+        ax.set_axis_off()
+        ax.set_aspect('auto')
+    else:
+        scale = 0.9
+        fig = plt.figure(figsize=(FIG_W_PX/100*scale, FIG_H_PX/100*scale), dpi=100)
+        shift_up = 0.02
+        ax = fig.add_axes([0.0, BOTTOM_AREA_PX / FIG_H_PX + shift_up, 1.0, TOP_AREA_PX / FIG_H_PX],
+                        projection=ccrs.PlateCarree())
+        ax.set_extent(extent)
+        ax.set_axis_off()
+        ax.set_aspect('auto')
 
-    # ---------------------------------
-    # 🔍 Interpolation auf feineres Raster (optional)
-    # ---------------------------------
-    target_res = 0.025  # Zielauflösung in Grad (~2.8 km)
-    lon_min, lon_max, lat_min, lat_max = extent
-    lon_new = np.arange(lon_min, lon_max + target_res, target_res)
-    lat_new = np.arange(lat_min, lat_max + target_res, target_res)
-    lon2d_new, lat2d_new = np.meshgrid(lon_new, lat_new)
+
+    if var_type == "pmsl_eu":
+        target_res = 0.25   # gröber für Europa (~11 km)
+        lon_min, lon_max, lat_min, lat_max = extent_eu
+        buffer = target_res * 10
+        nx = int(round(lon_max - lon_min) / target_res) + 1
+        ny = int(round(lat_max - lat_min) / target_res) + 1
+        lon_new = np.linspace(lon_min - buffer, lon_max + buffer, nx + 15)
+        lat_new = np.linspace(lat_min - buffer, lat_max + buffer, ny + 15)
+        lon2d_new, lat2d_new = np.meshgrid(lon_new, lat_new)
+    else:
+        target_res = 0.025  # feiner für Deutschland (~2.8 km)
+        lon_min, lon_max, lat_min, lat_max = extent
+        lon_new = np.arange(lon_min, lon_max + target_res, target_res)
+        lat_new = np.arange(lat_min, lat_max + target_res, target_res)
+        lon2d_new, lat2d_new = np.meshgrid(lon_new, lat_new)
+
 
     # Nur interpolieren, wenn Daten reguläres 2D-Gitter haben
     if lon.ndim == 1 and lat.ndim == 1 and data.ndim == 2:
@@ -516,134 +564,142 @@ for filename in sorted(os.listdir(data_dir)):
     elif var_type == "snowfall":
         im = ax.pcolormesh(lon, lat, data, cmap=snowfall_colors, norm=BoundaryNorm(snowfall_bounds, snowfall_colors.N), shading="auto")
     elif var_type == "pmsl":
-    # Luftdruck-Daten
+        # --- Luftdruck auf Meereshöhe (Deutschland) ---
         im = ax.pcolormesh(lon, lat, data, cmap=pmsl_colors, norm=pmsl_norm, shading="auto")
-        data_hpa = data  # data schon in hPa
+        data_hpa = data  # Daten liegen bereits in hPa vor
 
         # Haupt-Isobaren (alle 4 hPa)
         main_levels = list(range(912, 1070, 4))
         # Feine Isobaren (alle 1 hPa)
         fine_levels = list(range(912, 1070, 1))
 
+        # Nur Levels zeichnen, die im Datenbereich liegen
         main_levels = [lev for lev in main_levels if data_hpa.min() <= lev <= data_hpa.max()]
         fine_levels = [lev for lev in fine_levels if data_hpa.min() <= lev <= data_hpa.max()]
 
-        # Feine Isobaren-Linien (transparent)
-        cs_fine = ax.contour(lon, lat, data_hpa, levels=fine_levels,
-                            colors='white', linewidths=0.3, alpha=0.8)
+        # Feine Isobaren (weiß, dünn, leicht transparent)
+        ax.contour(
+            lon, lat, data_hpa,
+            levels=fine_levels,
+            colors='white', linewidths=0.4, alpha=0.6
+        )
 
-        # Haupt-Isobaren (dick, schwarz)
-        cs_main = ax.contour(lon, lat, data_hpa, levels=main_levels,
-                            colors='white', linewidths=1.2, alpha=1)
+        # Haupt-Isobaren (weiß, etwas dicker)
+        cs_main = ax.contour(
+            lon, lat, data_hpa,
+            levels=main_levels,
+            colors='white', linewidths=1.1, alpha=0.9
+        )
 
-        used_points = set()  # global, für Haupt- und Feine-Isobaren
-        texts = []  # Für adjust_text
+        # Isobaren-Beschriftung (Zahlen direkt auf Linien)
+        ax.clabel(cs_main, inline=True, fmt='%d', fontsize=9, colors='black')
 
-        min_city_dist = 1.1  # Abstand in Grad zu Städten
+        # --- Extremwerte (Tief & Hoch) markieren, aber nur wenn im Extent ---
+        min_idx = np.unravel_index(np.nanargmin(data_hpa), data_hpa.shape)
+        max_idx = np.unravel_index(np.nanargmax(data_hpa), data_hpa.shape)
+        min_val = data_hpa[min_idx]
+        max_val = data_hpa[max_idx]
 
-        def place_random_labels(cs, n_labels):
-            contour_points = []
-            for level_segs in cs.allsegs:
-                for seg in level_segs:
-                    if seg.size > 0:
-                        contour_points.extend(seg)
-            contour_points = np.array(contour_points)
+        lon_min, lon_max, lat_min, lat_max = extent
 
-            # Punkte innerhalb des Extents filtern
-            lon_min, lon_max, lat_min, lat_max = extent
-            mask = (contour_points[:,0] >= lon_min) & (contour_points[:,0] <= lon_max) & \
-                (contour_points[:,1] >= lat_min) & (contour_points[:,1] <= lat_max)
-            contour_points = contour_points[mask]
+        # Tiefdruckzentrum (blauer Wert)
+        lon_minpt, lat_minpt = lon[min_idx[1]], lat[min_idx[0]]
+        if lon_min <= lon_minpt <= lon_max and lat_min <= lat_minpt <= lat_max:
+            ax.text(
+                lon_minpt, lat_minpt,
+                f"{min_val:.0f}",
+                color='blue', fontsize=12, fontweight='bold',
+                ha='center', va='center',
+                path_effects=[path_effects.withStroke(linewidth=2, foreground='white')]
+            )
 
-            lat_idx = np.searchsorted(lat, contour_points[:,1])
-            lon_idx = np.searchsorted(lon, contour_points[:,0])
+        # Hochdruckzentrum (roter Wert)
+        lon_maxpt, lat_maxpt = lon[max_idx[1]], lat[max_idx[0]]
+        if lon_min <= lon_maxpt <= lon_max and lat_min <= lat_maxpt <= lat_max:
+            ax.text(
+                lon_maxpt, lat_maxpt,
+                f"{max_val:.0f}",
+                color='red', fontsize=12, fontweight='bold',
+                ha='center', va='center',
+                path_effects=[path_effects.withStroke(linewidth=2, foreground='white')]
+            )
 
-            # Clamping, um Indexfehler zu vermeiden
-            lat_idx = np.clip(lat_idx, 0, len(lat) - 1)
-            lon_idx = np.clip(lon_idx, 0, len(lon) - 1)
 
-            ij_points = list(zip(lat_idx, lon_idx))
 
-            # Duplikate entfernen
-            ij_points = list(dict.fromkeys(ij_points))
+    elif var_type == "pmsl_eu":
+            # Schnellere Variante ohne adjust_text und smoothing
+            im = ax.pcolormesh(lon, lat, data, cmap=pmsl_colors, norm=pmsl_norm, shading="auto")
+            data_hpa = data  # data schon in hPa
+            main_levels = list(range(912, 1070, 4))
+            cs = ax.contour(lon, lat, data_hpa, levels=main_levels,
+                            colors='white', linewidths=0.8, alpha=0.8)
+            ax.clabel(cs, inline=True, fmt='%d', fontsize=9, colors='black')
 
-            # Punkte filtern, die schon verwendet wurden oder zu nah an Städten liegen
-            filtered_points = []
-            for i,j in ij_points:
-                lon_pt, lat_pt = lon[j], lat[i]
+            low_levels = list(range(912, 1070, 1))
+            ax.contour(lon, lat, data_hpa, levels=low_levels,
+                             colors='white', linewidths=0.5, alpha=0.5)
 
-                # Abstand zu Städten prüfen
-                if any(np.hypot(lon_pt - city_lon, lat_pt - city_lat) < min_city_dist
-                    for city_lon, city_lat in zip(cities['lon'], cities['lat'])):
-                    continue
+            # Min/Max-Druck markieren (optional)
+            min_idx = np.unravel_index(np.nanargmin(data_hpa), data_hpa.shape)
+            max_idx = np.unravel_index(np.nanargmax(data_hpa), data_hpa.shape)
 
-                # Schon benutzt?
-                if (i,j) in used_points:
-                    continue
+            ax.text(
+                lon[min_idx[1]], lat[min_idx[0]],
+                f"T\n{data_hpa[min_idx]:.0f}",
+                color='blue', fontsize=11, fontweight='bold',
+                ha='center', va='center',
+                path_effects=[path_effects.withStroke(linewidth=2, foreground='white')]
+            )
 
-                filtered_points.append((i,j))
+            ax.text(
+                lon[max_idx[1]], lat[max_idx[0]],
+                f"H\n{data_hpa[max_idx]:.0f}",
+                color='red', fontsize=11, fontweight='bold',
+                ha='center', va='center',
+                path_effects=[path_effects.withStroke(linewidth=2, foreground='white')]
+            )
 
-            # Zufällig n_labels auswählen
-            if len(filtered_points) > n_labels:
-                chosen_points = [filtered_points[i] for i in np.random.choice(len(filtered_points), n_labels, replace=False)]
-            else:
-                chosen_points = filtered_points
+    # ------------------------------
+    # Grenzen & Städte
+    # ------------------------------
 
-            # Werte auf die Karte setzen & als benutzt markieren
-            for i, j in chosen_points:
-                val = data_hpa[i, j]
-                txt = ax.text(lon[j], lat[i], f"{val:.0f}", fontsize=9,
-                            ha='center', va='center', color='black')
-                txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
-                texts.append(txt)
-                used_points.add((i,j))
+    if var_type == "pmsl_eu":
+        # 🌍 Europa: nur Ländergrenzen + europäische Städte
+        ax.add_feature(cfeature.BORDERS.with_scale("10m"), edgecolor="black", linewidth=0.7)
+        ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="black", linewidth=0.7)
 
-        # Zufällige Labels platzieren
-        place_random_labels(cs_main, n_labels=6)  # Haupt-Isobaren
-        place_random_labels(cs_fine, n_labels=6)  # Feine Isobaren
+        for _, city in eu_cities.iterrows():
+            ax.plot(city["lon"], city["lat"], "o", markersize=6,
+                    markerfacecolor="black", markeredgecolor="white",
+                    markeredgewidth=1.5, zorder=5)
+            txt = ax.text(city["lon"] + 0.3, city["lat"] + 0.3, city["name"],
+                          fontsize=9, color="black", weight="bold", zorder=6)
+            txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
 
-        # Extremwerte bestimmen
-        min_val = np.min(data_hpa)
-        max_val = np.max(data_hpa)
+    else:
+        # 🇩🇪 Deutschland: Bundesländer, Grenzen und Städte
+        ax.add_feature(cfeature.STATES.with_scale("10m"), edgecolor="#2C2C2C", linewidth=1)
+        ax.add_feature(cfeature.BORDERS, linestyle=":", edgecolor="#2C2C2C", linewidth=1)
+        ax.add_feature(cfeature.COASTLINE, linewidth=1.0, edgecolor="black")
 
-        # Positionen des minimalen und maximalen Werts finden
-        min_pos = np.unravel_index(np.argmin(data_hpa), data_hpa.shape)
-        max_pos = np.unravel_index(np.argmax(data_hpa), data_hpa.shape)
+        for _, city in cities.iterrows():
+            ax.plot(city["lon"], city["lat"], "o", markersize=6,
+                    markerfacecolor="black", markeredgecolor="white",
+                    markeredgewidth=1.5, zorder=5)
+            txt = ax.text(city["lon"] + 0.1, city["lat"] + 0.1, city["name"],
+                          fontsize=9, color="black", weight="bold", zorder=6)
+            txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
 
-        # Tief (blau)
-        txt_min = ax.text(lon[min_pos[1]], lat[min_pos[0]], f"{min_val:.0f}",
-                        fontsize=14, color='blue', ha='center', va='center')
-        txt_min.set_path_effects([path_effects.withStroke(linewidth=2, foreground="white")])
-        texts.append(txt_min)
-        used_points.add(min_pos)
+    # Rahmen um Karte
+    ax.add_patch(mpatches.Rectangle((0, 0), 1, 1, transform=ax.transAxes,
+                                    fill=False, color="black", linewidth=2))
 
-        # Hoch (rot)
-        txt_max = ax.text(lon[max_pos[1]], lat[max_pos[0]], f"{max_val:.0f}",
-                        fontsize=14, color='red', ha='center', va='center')
-        txt_max.set_path_effects([path_effects.withStroke(linewidth=2, foreground="white")])
-        texts.append(txt_max)
-        used_points.add(max_pos)
-
-        # adjust_text aufrufen, um Überlappungen zwischen Labels zu vermeiden
-        adjust_text(texts, ax=ax, expand_text=(1.2,1.2), arrowprops=None)
-
-    # Bundesländer-Grenzen aus Cartopy (statt GeoJSON)
-    ax.add_feature(cfeature.STATES.with_scale("10m"), edgecolor="#2C2C2C", linewidth=1)
-    for _, city in cities.iterrows():
-        ax.plot(city["lon"], city["lat"], "o", markersize=6, markerfacecolor="black",
-                markeredgecolor="white", markeredgewidth=1.5, zorder=5)
-        txt = ax.text(city["lon"]+0.1, city["lat"]+0.1, city["name"], fontsize=9,
-                      color="black", weight="bold", zorder=6)
-        txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
-    ax.add_feature(cfeature.BORDERS, linestyle=":")
-    ax.add_feature(cfeature.COASTLINE)
-    ax.add_patch(mpatches.Rectangle((0,0),1,1, transform=ax.transAxes, fill=False, color="black", linewidth=2))
 
     # Legende
     legend_h_px = 50
     legend_bottom_px = 45
-    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall", "pmsl"]:
-        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else cape_bounds if var_type=="cape_ml" else dbz_bounds if var_type=="dbz_cmax" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else cloud_bounds if var_type=="cloud" else twater_bounds if var_type=="twater" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors 
+    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall", "pmsl", "pmsl_eu"]:
+        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else cape_bounds if var_type=="cape_ml" else dbz_bounds if var_type=="dbz_cmax" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else cloud_bounds if var_type=="cloud" else twater_bounds if var_type=="twater" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors if var_type=="pmsl" else pmsl_bounds_colors
         cbar_ax = fig.add_axes([0.03, legend_bottom_px / FIG_H_PX, 0.94, legend_h_px / FIG_H_PX])
         cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal", ticks=bounds)
         cbar.ax.tick_params(colors="black", labelsize=7)
@@ -652,6 +708,9 @@ for filename in sorted(os.listdir(data_dir)):
 
         # Für pmsl nur jeden 10. hPa Tick beschriften
         if var_type=="pmsl":
+            tick_labels = [str(tick) if tick % 8 == 0 else "" for tick in bounds]
+            cbar.set_ticklabels(tick_labels)
+        if var_type=="pmsl_eu":
             tick_labels = [str(tick) if tick % 8 == 0 else "" for tick in bounds]
             cbar.set_ticklabels(tick_labels)
         if var_type == "t2m":
@@ -679,7 +738,8 @@ for filename in sorted(os.listdir(data_dir)):
         "snow": "Schneehöhe (cm)",
         "twater": "Gesamtwassergehalt (mm)",
         "snowfall": "Schneefallgrenze (m)",
-        "pmsl": "Luftdruck auf Meereshöhe (hPa)"
+        "pmsl": "Luftdruck auf Meereshöhe (hPa)",
+        "pmsl_eu": "Luftdruck auf Meereshöhe (hPa), Europa"
     }
 
     left_text = footer_texts.get(var_type, var_type) + \
