@@ -581,14 +581,14 @@ for filename in sorted(os.listdir(data_dir)):
         ax.contour(
             lon, lat, data_hpa,
             levels=fine_levels,
-            colors='white', linewidths=0.4, alpha=0.6
+            colors='gray', linewidths=0.5, alpha=0.4
         )
 
         # Haupt-Isobaren (weiß, etwas dicker)
         cs_main = ax.contour(
             lon, lat, data_hpa,
             levels=main_levels,
-            colors='white', linewidths=1.1, alpha=0.9
+            colors='white', linewidths=0.8, alpha=0.9
         )
 
         # Isobaren-Beschriftung (Zahlen direkt auf Linien)
@@ -636,12 +636,12 @@ for filename in sorted(os.listdir(data_dir)):
             data_hpa = data  # data schon in hPa
             main_levels = list(range(912, 1070, 4))
             cs = ax.contour(lon, lat, data_hpa, levels=main_levels,
-                            colors='white', linewidths=0.8, alpha=0.8)
+                            colors='white', linewidths=0.8, alpha=0.9)
             ax.clabel(cs, inline=True, fmt='%d', fontsize=9, colors='black')
 
             low_levels = list(range(912, 1070, 1))
             ax.contour(lon, lat, data_hpa, levels=low_levels,
-                             colors='white', linewidths=0.5, alpha=0.5)
+                             colors='gray', linewidths=0.5, alpha=0.4)
 
             # Min/Max-Druck markieren (optional)
             min_idx = np.unravel_index(np.nanargmin(data_hpa), data_hpa.shape)
