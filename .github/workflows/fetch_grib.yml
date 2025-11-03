@@ -41,8 +41,8 @@ jobs:
           HOUR=$(date -u +%H)
           case $HOUR in
             03|04|05) RUN=00 ;;
-            09|10|11|15) RUN=06 ;;
-            16|17|18) RUN=12 ;;
+            09|10|11) RUN=06 ;;
+            15|16|17|18) RUN=12 ;;
             21|22|23) RUN=18 ;;
           esac
           DATE=$(date -u +%Y%m%d)
@@ -223,8 +223,9 @@ jobs:
     needs: fetch_and_generate
     strategy:
       matrix:
-        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsel_eu]
-      max-parallel: 7
+        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsl_eu]
+      max-parallel: 8
+      
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -247,7 +248,7 @@ jobs:
         run: |
           mkdir -p iconeu/${{ matrix.variable }}
           input_dir="data/${{ matrix.variable }}"
-          if [ "${{ matrix.variable }}" = "pmsel_eu" ]; then
+          if [ "${{ matrix.variable }}" = "pmsl_eu" ]; then
             input_dir="data/pmsl"
           fi
           python scripts/generate_pngs.py \
