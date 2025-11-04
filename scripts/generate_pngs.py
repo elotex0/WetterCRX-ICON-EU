@@ -453,52 +453,6 @@ for filename in sorted(os.listdir(data_dir)):
     # Plot
     if var_type == "t2m":
         im = ax.pcolormesh(lon, lat, data, cmap=t2m_colors, norm=t2m_norm, shading="auto")
-
-        contours = ax.contour(lon, lat, data, levels=t2m_bounds, colors='black', linewidths=0.3, alpha=0.6)
-
-        # Anzahl der Werte, die angezeigt werden sollen
-        n_labels = 40
-        
-        # 2D-Mesh für Maskierung
-        lon2d, lat2d = np.meshgrid(lon, lat)
-        
-        # Alle gültigen Datenpunkte innerhalb des Extents
-        lon_min, lon_max, lat_min, lat_max = extent
-        valid_mask = np.isfinite(data) & (lon2d >= lon_min) & (lon2d <= lon_max) & (lat2d >= lat_min) & (lat2d <= lat_max)
-        
-        # Indizes der gültigen Punkte
-        valid_indices = np.argwhere(valid_mask)
-
-       # Abstand in Grad, innerhalb dessen keine Labels auf Städte gesetzt werden
-        np.random.shuffle(valid_indices)
-        min_city_dist = 1.0
-        used_points = 0
-        tried_points = set()
-        texts = []
-        while used_points < n_labels and len(tried_points) < len(valid_indices):
-            i, j = valid_indices[np.random.randint(0, len(valid_indices))]
-            if (i, j) in tried_points:
-                continue
-            tried_points.add((i, j))
-
-            lon_pt, lat_pt = lon[j], lat[i]
-
-            # Prüfen, ob zu nah an einer Stadt
-            if any(np.hypot(lon_pt - city_lon, lat_pt - city_lat) < min_city_dist
-                for city_lon, city_lat in zip(cities['lon'], cities['lat'])):
-                # neuen Punkt versuchen – einfach continue
-                continue
-            
-            val = data[i, j]
-            txt = ax.text(lon_pt, lat_pt, f"{val:.0f}", fontsize=9,
-                        ha='center', va='center', color='black')
-            txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
-            texts.append(txt)
-            used_points += 1
-
-        # Labels automatisch verschieben, um Überlappungen zu vermeiden
-        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=None)
-        
     elif var_type == "ww":
         valid_mask = np.isfinite(data)
         codes = np.unique(data[valid_mask]).astype(int)
@@ -518,43 +472,6 @@ for filename in sorted(os.listdir(data_dir)):
         im = ax.pcolormesh(lon, lat, data, cmap=dbz_colors, norm=dbz_norm, shading="auto")
     elif var_type == "wind":
         im = ax.pcolormesh(lon, lat, data, cmap=wind_colors, norm=wind_norm, shading="auto")
-         # ---- Windwerte anzeigen ----
-        contours = ax.contour(lon, lat, data, levels=wind_bounds, colors='black', linewidths=0.3, alpha=0.6)
-
-        n_labels = 40  # Anzahl der Textlabels
-        lon2d, lat2d = np.meshgrid(lon, lat)
-        lon_min, lon_max, lat_min, lat_max = extent
-
-        valid_mask = np.isfinite(data) & (lon2d >= lon_min) & (lon2d <= lon_max) & (lat2d >= lat_min) & (lat2d <= lat_max)
-        valid_indices = np.argwhere(valid_mask)
-
-        np.random.shuffle(valid_indices)
-        min_city_dist = 1.0  # Mindestabstand zu Städten (damit Texte sich nicht mit Städten überlappen)
-        texts = []
-        used_points = 0
-        tried_points = set()
-
-        while used_points < n_labels and len(tried_points) < len(valid_indices):
-            i, j = valid_indices[np.random.randint(0, len(valid_indices))]
-            if (i, j) in tried_points:
-                continue
-            tried_points.add((i, j))
-
-            lon_pt, lat_pt = lon[j], lat[i]
-
-            # Prüfen, ob Punkt zu nah an einer Stadt liegt
-            if any(np.hypot(lon_pt - city_lon, lat_pt - city_lat) < min_city_dist
-                for city_lon, city_lat in zip(cities['lon'], cities['lat'])):
-                continue
-
-            val = data[i, j]
-            txt = ax.text(lon_pt, lat_pt, f"{val:.0f}", fontsize=9,
-                        ha='center', va='center', color='black')
-            txt.set_path_effects([path_effects.withStroke(linewidth=1.5, foreground="white")])
-            texts.append(txt)
-            used_points += 1
-
-        adjust_text(texts, ax=ax, expand_text=(1.2, 1.2), arrowprops=None)
     elif var_type == "snow":
         im = ax.pcolormesh(lon2d, lat2d, data, cmap=snow_colors, norm=snow_norm, shading="auto")
     elif var_type == "cloud":
