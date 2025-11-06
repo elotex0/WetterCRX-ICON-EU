@@ -405,9 +405,9 @@ for filename in sorted(os.listdir(data_dir)):
 
 
     if var_type == "pmsl_eu":
-        target_res = 0.25   # gröber für Europa (~11 km)
+        target_res = 0.1   # gröber für Europa (~11 km)
         lon_min, lon_max, lat_min, lat_max = extent_eu
-        buffer = target_res * 10
+        buffer = target_res * 20
         nx = int(round(lon_max - lon_min) / target_res) + 1
         ny = int(round(lat_max - lat_min) / target_res) + 1
         lon_new = np.linspace(lon_min - buffer, lon_max + buffer, nx + 15)
