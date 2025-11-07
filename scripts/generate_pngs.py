@@ -123,31 +123,6 @@ tp_acc_colors = ListedColormap([
 tp_acc_norm = mcolors.BoundaryNorm(tp_acc_bounds, tp_acc_colors.N)
 
 # ------------------------------
-# CAPE-Farben
-# ------------------------------
-cape_bounds = [0, 20, 40, 60, 80, 100, 200, 400, 600, 800, 1000, 1500, 2000, 2500, 3000]
-cape_colors = ListedColormap([
-    "#676767", "#006400", "#008000", "#00CC00", "#66FF00", "#FFFF00", 
-    "#FFCC00", "#FF9900", "#FF6600", "#FF3300", "#FF0000", "#FF0095", 
-    "#FC439F", "#FF88D3", "#FF99FF"
-])
-cape_norm = mcolors.BoundaryNorm(cape_bounds, cape_colors.N)
-
-# ------------------------------
-# DBZ-CMAX Farben
-# ------------------------------
-dbz_bounds = [0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 63, 67, 70]
-dbz_colors = ListedColormap([
-    "#676767", "#FFFFFF", "#B3EFED", "#8CE7E2", "#00F5ED",
-    "#00CEF0", "#01AFF4", "#028DF6", "#014FF7", "#0000F6",
-    "#00FF01", "#01DF00", "#00D000", "#00BF00", "#00A701",
-    "#019700", "#FFFF00", "#F9F000", "#EDD200", "#E7B500",
-    "#FF5000", "#FF2801", "#F40000", "#EA0001", "#CC0000",
-    "#FFC8FF", "#E9A1EA", "#D379D3", "#BE55BE", "#960E96"
-])
-dbz_norm = mcolors.BoundaryNorm(dbz_bounds, dbz_colors.N)
-
-# ------------------------------
 # Windböen-Farben
 # ------------------------------
 wind_bounds = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 180, 200, 220, 240, 260, 280, 300]
@@ -171,30 +146,6 @@ snow_colors = ListedColormap([
         "#FE6E6E", "#DF093F", "#BE0000", "#A40000", "#880000"
     ])
 snow_norm = mcolors.BoundaryNorm(snow_bounds, snow_colors.N)
-
-#-------------------------------
-#Gesamtbewölkung-Farben
-#------------------------------
-# Farbskala für Gesamtbewölkung
-cloud_bounds = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]  # in cm
-cloud_colors = ListedColormap([
-    "#FFFF00", "#EEEE0B", "#DDDD17", "#CCCC22", "#BBBB2E",
-    "#ABAB39", "#9A9A45", "#898950", "#78785C", "#676767"
-])
-cloud_norm = mcolors.BoundaryNorm(cloud_bounds, cloud_colors.N)
-
-# ------------------------------
-#Gesamtwassergehalt
-# ------------------------------
-twater_bounds = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90]  # in mm
-twater_colors = ListedColormap([
-        "#6E4A00", "#B49E62", "#D7CD13", "#B9F019", "#1ACF06",
-        "#08534C", "#035DBE", "#2692FF", "#75BAFF", "#CBBFFF",
-        "#EBA6FF", "#DD66FE", "#AC01DD", "#7C009E", "#673775",
-        "#6B6B6B", "#818181", "#969696"
-    ])
-
-twater_norm = mcolors.BoundaryNorm(twater_bounds, twater_colors.N)
 
 # ------------------------------
 # Schneefallgrenze (SNOWLMT)
@@ -322,6 +273,13 @@ for filename in sorted(os.listdir(data_dir)):
         data = ds["fg10"].values
         data[data < 0] = np.nan
         data = data * 3.6  # m/s → km/h
+    elif var_type == "wind_eu":
+        if "fg10" not in ds:
+            print(f"Keine passende Windvariable in {filename} ds.keys(): {list(ds.keys())}")
+            continue
+        data = ds["fg10"].values
+        data[data < 0] = np.nan
+        data = data * 3.6  # m/s → km/h
     elif var_type == "snow":
         if "sde" not in ds:
             print(f"Keine sde-Variable in {filename}")
@@ -384,7 +342,7 @@ for filename in sorted(os.listdir(data_dir)):
     # --------------------------
     # Figure (Deutschland oder Europa)
     # --------------------------
-    if var_type == "pmsl_eu":
+    if var_type in ["pmsl_eu", "wind_eu"]:
         scale = 0.9
         fig = plt.figure(figsize=(FIG_W_PX/100*scale, FIG_H_PX/100*scale), dpi=100)
         shift_up = 0.02
@@ -404,7 +362,7 @@ for filename in sorted(os.listdir(data_dir)):
         ax.set_aspect('auto')
 
 
-    if var_type == "pmsl_eu":
+    if var_type in ["pmsl_eu", "wind_eu"]:
         target_res = 0.1   # gröber für Europa (~11 km)
         lon_min, lon_max, lat_min, lat_max = extent_eu
         buffer = target_res * 20
@@ -466,18 +424,12 @@ for filename in sorted(os.listdir(data_dir)):
         im = ax.pcolormesh(lon, lat, idx_data, cmap=cmap, vmin=-0.5, vmax=len(codes)-0.5, shading="auto")
     elif var_type == "tp_acc":
         im = ax.pcolormesh(lon2d, lat2d, data, cmap=tp_acc_colors, norm=tp_acc_norm, shading="auto")
-    elif var_type == "cape_ml":
-        im = ax.pcolormesh(lon, lat, data, cmap=cape_colors, norm=cape_norm, shading="auto")
-    elif var_type == "dbz_cmax":
-        im = ax.pcolormesh(lon, lat, data, cmap=dbz_colors, norm=dbz_norm, shading="auto")
     elif var_type == "wind":
+        im = ax.pcolormesh(lon, lat, data, cmap=wind_colors, norm=wind_norm, shading="auto")
+    elif var_type == "wind_eu":
         im = ax.pcolormesh(lon, lat, data, cmap=wind_colors, norm=wind_norm, shading="auto")
     elif var_type == "snow":
         im = ax.pcolormesh(lon2d, lat2d, data, cmap=snow_colors, norm=snow_norm, shading="auto")
-    elif var_type == "cloud":
-        im = ax.pcolormesh(lon, lat, data, cmap=cloud_colors, norm=cloud_norm, shading="auto")
-    elif var_type == "twater":
-        im = ax.pcolormesh(lon, lat, data, cmap=twater_colors, norm=twater_norm, shading="auto")
     elif var_type == "snowfall":
         im = ax.pcolormesh(lon, lat, data, cmap=snowfall_colors, norm=BoundaryNorm(snowfall_bounds, snowfall_colors.N), shading="auto")
     elif var_type == "pmsl":
@@ -584,7 +536,7 @@ for filename in sorted(os.listdir(data_dir)):
     # Grenzen & Städte
     # ------------------------------
 
-    if var_type == "pmsl_eu":
+    if var_type in ["pmsl_eu", "wind_eu"]:
         # 🌍 Europa: nur Ländergrenzen + europäische Städte
         ax.add_feature(cfeature.BORDERS.with_scale("10m"), edgecolor="black", linewidth=0.7)
         ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="black", linewidth=0.7)
@@ -619,8 +571,8 @@ for filename in sorted(os.listdir(data_dir)):
     # Legende
     legend_h_px = 50
     legend_bottom_px = 45
-    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall", "pmsl", "pmsl_eu"]:
-        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else cape_bounds if var_type=="cape_ml" else dbz_bounds if var_type=="dbz_cmax" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else cloud_bounds if var_type=="cloud" else twater_bounds if var_type=="twater" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors if var_type=="pmsl" else pmsl_bounds_colors
+    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall", "pmsl", "pmsl_eu", "wind_eu"]:
+        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors if var_type=="pmsl" else pmsl_bounds_colors if var_type=="pmsl_eu" else wind_bounds
         cbar_ax = fig.add_axes([0.03, legend_bottom_px / FIG_H_PX, 0.94, legend_h_px / FIG_H_PX])
         cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal", ticks=bounds)
         cbar.ax.tick_params(colors="black", labelsize=7)
@@ -660,7 +612,8 @@ for filename in sorted(os.listdir(data_dir)):
         "twater": "Gesamtwassergehalt (mm)",
         "snowfall": "Schneefallgrenze (m)",
         "pmsl": "Luftdruck auf Meereshöhe (hPa)",
-        "pmsl_eu": "Luftdruck auf Meereshöhe (hPa), Europa"
+        "pmsl_eu": "Luftdruck auf Meereshöhe (hPa), Europa",
+        "wind_eu": "Windböen (km/h), Europa"
     }
 
     left_text = footer_texts.get(var_type, var_type) + \
