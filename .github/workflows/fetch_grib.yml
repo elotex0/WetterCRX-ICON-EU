@@ -223,8 +223,8 @@ jobs:
     needs: fetch_and_generate
     strategy:
       matrix:
-        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsl_eu]
-      max-parallel: 8
+        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsl_eu, wind_eu]
+      max-parallel: 9
       
     steps:
       - name: Checkout Repo
@@ -248,8 +248,11 @@ jobs:
         run: |
           mkdir -p iconeu/${{ matrix.variable }}
           input_dir="data/${{ matrix.variable }}"
+          
           if [ "${{ matrix.variable }}" = "pmsl_eu" ]; then
             input_dir="data/pmsl"
+          elif [ "${{ matrix.variable }}" = "wind_eu" ]; then
+            input_dir="data/wind"
           fi
           python scripts/generate_pngs.py \
             "$input_dir" \
