@@ -700,7 +700,7 @@ for filename in sorted(os.listdir(data_dir)):
         "pmsl_eu": "Luftdruck auf Meereshöhe (hPa), Europa",
         "wind_eu": "Windböen (km/h), Europa",
         "t850_eu": "Temperatur 850hPa (°C), Europa",
-        "geo_eu": "Geopotenzial 500hPa (m), Europa",
+        "geo_eu": "Geopotentielle Höhe 500hPa (m), Europa",
     }
 
     left_text = footer_texts.get(var_type, var_type) + \
