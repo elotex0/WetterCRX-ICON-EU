@@ -232,6 +232,16 @@ for filename in sorted(os.listdir(data_dir)):
             print(f"Keine t2m in {filename}")
             continue
         data = ds["t2m"].values - 273.15
+    elif var_type == "t850":
+        if "t" not in ds:
+            print(f"Keine t in {filename} ds.keys(): {list(ds.keys())}")
+            continue
+        data = ds["t"].values - 273.15
+    elif var_type == "t850_eu":
+        if "t" not in ds:
+            print(f"Keine t in {filename} ds.keys(): {list(ds.keys())}")
+            continue
+        data = ds["t"].values - 273.15
     elif var_type == "ww":
         varname = next((vn for vn in ds.data_vars if vn.lower() in ["ww","weather"]), None)
         if varname is None:
@@ -342,7 +352,7 @@ for filename in sorted(os.listdir(data_dir)):
     # --------------------------
     # Figure (Deutschland oder Europa)
     # --------------------------
-    if var_type in ["pmsl_eu", "wind_eu"]:
+    if var_type in ["pmsl_eu", "wind_eu", "t850_eu"]:
         scale = 0.9
         fig = plt.figure(figsize=(FIG_W_PX/100*scale, FIG_H_PX/100*scale), dpi=100)
         shift_up = 0.02
@@ -362,7 +372,7 @@ for filename in sorted(os.listdir(data_dir)):
         ax.set_aspect('auto')
 
 
-    if var_type in ["pmsl_eu", "wind_eu"]:
+    if var_type in ["pmsl_eu", "wind_eu", "t850_eu"]:
         target_res = 0.1   # gröber für Europa (~11 km)
         lon_min, lon_max, lat_min, lat_max = extent_eu
         buffer = target_res * 20
@@ -410,6 +420,10 @@ for filename in sorted(os.listdir(data_dir)):
 
     # Plot
     if var_type == "t2m":
+        im = ax.pcolormesh(lon, lat, data, cmap=t2m_colors, norm=t2m_norm, shading="auto")
+    elif var_type == "t850":
+        im = ax.pcolormesh(lon, lat, data, cmap=t2m_colors, norm=t2m_norm, shading="auto")
+    elif var_type == "t850_eu":
         im = ax.pcolormesh(lon, lat, data, cmap=t2m_colors, norm=t2m_norm, shading="auto")
     elif var_type == "ww":
         valid_mask = np.isfinite(data)
@@ -536,7 +550,7 @@ for filename in sorted(os.listdir(data_dir)):
     # Grenzen & Städte
     # ------------------------------
 
-    if var_type in ["pmsl_eu", "wind_eu"]:
+    if var_type in ["pmsl_eu", "wind_eu", "t850_eu"]:
         # 🌍 Europa: nur Ländergrenzen + europäische Städte
         ax.add_feature(cfeature.BORDERS.with_scale("10m"), edgecolor="black", linewidth=0.7)
         ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="black", linewidth=0.7)
@@ -571,8 +585,8 @@ for filename in sorted(os.listdir(data_dir)):
     # Legende
     legend_h_px = 50
     legend_bottom_px = 45
-    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall", "pmsl", "pmsl_eu", "wind_eu"]:
-        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors if var_type=="pmsl" else pmsl_bounds_colors if var_type=="pmsl_eu" else wind_bounds
+    if var_type in ["t2m","tp_acc","cape_ml","dbz_cmax","wind","snow", "cloud", "twater", "snowfall", "pmsl", "pmsl_eu", "wind_eu", "t850_eu", "t850"]:
+        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors if var_type=="pmsl" else pmsl_bounds_colors if var_type=="pmsl_eu" else wind_bounds if var_type=="wind_eu" else t2m_bounds if var_type=="t850_eu" else t2m_bounds
         cbar_ax = fig.add_axes([0.03, legend_bottom_px / FIG_H_PX, 0.94, legend_h_px / FIG_H_PX])
         cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal", ticks=bounds)
         cbar.ax.tick_params(colors="black", labelsize=7)
@@ -587,6 +601,12 @@ for filename in sorted(os.listdir(data_dir)):
             tick_labels = [str(tick) if tick % 8 == 0 else "" for tick in bounds]
             cbar.set_ticklabels(tick_labels)
         if var_type == "t2m":
+            tick_labels = [str(tick) if tick % 4 == 0 else "" for tick in bounds]
+            cbar.set_ticklabels(tick_labels)
+        if var_type == "t850":
+            tick_labels = [str(tick) if tick % 4 == 0 else "" for tick in bounds]
+            cbar.set_ticklabels(tick_labels)
+        if var_type == "t850_eu":
             tick_labels = [str(tick) if tick % 4 == 0 else "" for tick in bounds]
             cbar.set_ticklabels(tick_labels)
 
@@ -604,6 +624,7 @@ for filename in sorted(os.listdir(data_dir)):
     footer_texts = {
         "ww": "Signifikantes Wetter",
         "t2m": "Temperatur 2m (°C)",
+        "t850": "Temperatur 850hPa (°C)",
         "tp_acc": "Akkumulierter Niederschlag (mm)",
         "cape_ml": "CAPE-Index (J/kg)",
         "cloud": "Gesamtbewölkung (%)",
@@ -613,7 +634,8 @@ for filename in sorted(os.listdir(data_dir)):
         "snowfall": "Schneefallgrenze (m)",
         "pmsl": "Luftdruck auf Meereshöhe (hPa)",
         "pmsl_eu": "Luftdruck auf Meereshöhe (hPa), Europa",
-        "wind_eu": "Windböen (km/h), Europa"
+        "wind_eu": "Windböen (km/h), Europa",
+        "t850_eu": "Temperatur 850hPa (°C), Europa"
     }
 
     left_text = footer_texts.get(var_type, var_type) + \
