@@ -94,6 +94,28 @@ jobs:
               bunzip2 -f t850_${i_padded}.grib2.bz2
             fi
           '
+
+      - name: Download t850hpa GRIB2 files
+        run: |
+          mkdir -p data/geo
+          cd data/geo
+          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
+            i_padded=$(printf "%03d" {})
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/fi/icon-eu_europe_regular-lat-lon_pressure-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_500_FI.grib2.bz2"
+            wget -O geo_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "geo_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f geo_${i_padded}.grib2.bz2
+            fi
+          '
+
+          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
+            i_padded=$(printf "%03d" {})
+            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/fi/icon-eu_europe_regular-lat-lon_pressure-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_500_FI.grib2.bz2"
+            wget -O geo_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
+            if [ -f "geo_${i_padded}.grib2.bz2" ]; then
+              bunzip2 -f geo_${i_padded}.grib2.bz2
+            fi
+          '
       
       - name: Download ww GRIB2 files
         run: |
@@ -244,8 +266,8 @@ jobs:
     needs: fetch_and_generate
     strategy:
       matrix:
-        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsl_eu, wind_eu, t850, t850_eu]
-      max-parallel: 11
+        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsl_eu, wind_eu, t850, t850_eu, geo_eu]
+      max-parallel: 12
       
     steps:
       - name: Checkout Repo
@@ -276,6 +298,8 @@ jobs:
             input_dir="data/wind"
           elif [ "${{ matrix.variable }}" = "t850_eu" ]; then
             input_dir="data/t850"
+          elif [ "${{ matrix.variable }}" = "t850_eu" ]; then
+            input_dir="data/geo"
           fi
           python scripts/generate_pngs.py \
             "$input_dir" \
