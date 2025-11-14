@@ -583,7 +583,7 @@ for filename in sorted(os.listdir(data_dir)):
                 ha='center', va='center',
                 transform=ccrs.PlateCarree(),
                 clip_on=True,
-                path_effects=[path_effects.withStroke(linewidth=2, foreground='black')]
+                path_effects=[path_effects.withStroke(linewidth=1.5, foreground='black')]
             )
 
     elif var_type == "geo_eu":
@@ -619,7 +619,7 @@ for filename in sorted(os.listdir(data_dir)):
                 ha='center', va='center',
                 transform=ccrs.PlateCarree(),
                 clip_on=True,
-                path_effects=[path_effects.withStroke(linewidth=2, foreground='black')]
+                path_effects=[path_effects.withStroke(linewidth=1.5, foreground='black')]
             )
 
 
