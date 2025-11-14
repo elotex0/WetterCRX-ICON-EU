@@ -266,8 +266,8 @@ jobs:
     needs: fetch_and_generate
     strategy:
       matrix:
-        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsl_eu, wind_eu, t850, t850_eu, geo_eu]
-      max-parallel: 12
+        variable: [t2m, ww, tp_acc, wind, snow, snowfall, pmsl, pmsl_eu, wind_eu, t850, t850_eu, geo_eu, ww_eu, t2m_eu]
+      max-parallel: 14
       
     steps:
       - name: Checkout Repo
@@ -300,6 +300,10 @@ jobs:
             input_dir="data/t850"
           elif [ "${{ matrix.variable }}" = "geo_eu" ]; then
             input_dir="data/geo"
+          elif [ "${{ matrix.variable }}" = "ww_eu" ]; then
+            input_dir="data/ww"
+          elif [ "${{ matrix.variable }}" = "t2m_eu" ]; then
+            input_dir="data/t2m"
           fi
           python scripts/generate_pngs.py \
             "$input_dir" \
