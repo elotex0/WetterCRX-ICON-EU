@@ -308,7 +308,6 @@ jobs:
             input_dir="data/tp_acc"
           elif [ "${{ matrix.variable }}" = "tp_eu" ]; then
             input_dir="data/tp_acc"
-          elif 
           fi
           python scripts/generate_pngs.py \
             "$input_dir" \
