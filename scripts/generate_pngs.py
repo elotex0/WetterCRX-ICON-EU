@@ -108,6 +108,17 @@ t2m_norm = BoundaryNorm(t2m_bounds, ncolors=len(t2m_bounds))
 # Niederschlags-Farben 1h (tp)
 # ------------------------------
 
+prec_bounds = [0.1, 0.2, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+               12, 14, 16, 20, 24, 30, 40, 50, 60, 80, 100, 125]
+prec_colors = ListedColormap([
+    "#B4D7FF", "#75BAFF", "#349AFF", "#0582FF", "#0069D2",
+    "#003680", "#148F1B", "#1ACF06", "#64ED07", "#FFF32B",
+    "#E9DC01", "#F06000", "#FF7F26", "#FFA66A", "#F94E78",
+    "#F71E53", "#BE0000", "#880000", "#64007F", "#C201FC",
+    "#DD66FE", "#EBA6FF", "#F9E7FF", "#D4D4D4", "#969696"
+])
+prec_norm = BoundaryNorm(prec_bounds, prec_colors.N)
+
 # ------------------------------
 # Aufsummierter Niederschlag (tp_acc)
 # ------------------------------
@@ -237,11 +248,18 @@ def add_ww_legend_bottom(fig, ww_categories, ww_colors_base):
 # ------------------------------
 # Dateien durchgehen
 # ------------------------------
+
+previous_tp = None
+file_counter = 0 
+
 for filename in sorted(os.listdir(data_dir)):
     if not filename.endswith(".grib2"):
         continue
     path = os.path.join(data_dir, filename)
     ds = cfgrib.open_dataset(path)
+
+     # Zähler erhöhen
+    file_counter += 1
 
     # Daten je Typ
     if var_type == "t2m":
@@ -276,6 +294,30 @@ for filename in sorted(os.listdir(data_dir)):
             print(f"Keine WW in {filename}")
             continue
         data = ds[varname].values
+    elif var_type in ["tp", "tp_eu"]:
+
+        if file_counter > 78:
+                    print(f"Datei {filename}: Überspringe stündlichen Niederschlag (3h Schritte)")
+                    continue
+                
+        if "tp" not in ds:
+            print(f"Keine tp in {filename}")
+            continue
+        
+        # Aktuelle Daten
+        tp_current = ds["tp"].values
+
+        if previous_tp is not None:
+            # Niederschlag der letzten Stunde berechnen
+            data = tp_current - previous_tp
+            data[data < 0.1] = np.nan  # keine negativen Werte
+        else:
+            # Für die erste Datei einfach die aktuellen Werte
+            data = tp_current
+        
+        # Speicher aktuelle tp für nächste Iteration
+        previous_tp = tp_current
+
     elif var_type == "tp_acc":
         tp_var = next((vn for vn in ["tp","tot_prec"] if vn in ds), None)
         if tp_var is None:
@@ -374,7 +416,7 @@ for filename in sorted(os.listdir(data_dir)):
     # --------------------------
     # Figure (Deutschland oder Europa)
     # --------------------------
-    if var_type in ["pmsl_eu", "wind_eu", "t850_eu", "geo_eu", "t2m_eu", "ww_eu"]:
+    if var_type in ["pmsl_eu", "wind_eu", "t850_eu", "geo_eu", "t2m_eu", "ww_eu", "tp_eu"]:
         scale = 0.9
         fig = plt.figure(figsize=(FIG_W_PX/100*scale, FIG_H_PX/100*scale), dpi=100)
         shift_up = 0.02
@@ -394,7 +436,7 @@ for filename in sorted(os.listdir(data_dir)):
         ax.set_aspect('auto')
 
 
-    if var_type in ["pmsl_eu", "wind_eu", "t850_eu", "geo_eu", "t2m_eu", "ww_eu"]:
+    if var_type in ["pmsl_eu", "wind_eu", "t850_eu", "geo_eu", "t2m_eu", "ww_eu", "tp_eu"]:
         target_res = 0.1   # gröber für Europa (~11 km)
         lon_min, lon_max, lat_min, lat_max = extent_eu
         buffer = target_res * 20
@@ -472,6 +514,8 @@ for filename in sorted(os.listdir(data_dir)):
         for c,i in code2idx.items():
             idx_data[data==c]=i
         im = ax.pcolormesh(lon, lat, idx_data, cmap=cmap, vmin=-0.5, vmax=len(codes)-0.5, shading="auto")
+    elif var_type in ["tp", "tp_eu"]:
+        im = ax.pcolormesh(lon, lat, data, cmap=prec_colors, norm=prec_norm, shading="auto")
     elif var_type == "tp_acc":
         im = ax.pcolormesh(lon2d, lat2d, data, cmap=tp_acc_colors, norm=tp_acc_norm, shading="auto")
     elif var_type == "wind":
@@ -627,7 +671,7 @@ for filename in sorted(os.listdir(data_dir)):
     # Grenzen & Städte
     # ------------------------------
 
-    if var_type in ["pmsl_eu", "wind_eu", "t850_eu", "geo_eu", "t2m_eu", "ww_eu"]:
+    if var_type in ["pmsl_eu", "wind_eu", "t850_eu", "geo_eu", "t2m_eu", "ww_eu", "tp_eu"]:
         # 🌍 Europa: nur Ländergrenzen + europäische Städte
         ax.add_feature(cfeature.BORDERS.with_scale("10m"), edgecolor="black", linewidth=0.7)
         ax.add_feature(cfeature.COASTLINE.with_scale("10m"), edgecolor="black", linewidth=0.7)
@@ -662,8 +706,8 @@ for filename in sorted(os.listdir(data_dir)):
     # Legende
     legend_h_px = 50
     legend_bottom_px = 45
-    if var_type in ["t2m","tp_acc","wind","snow", "cloud", "twater", "snowfall", "pmsl", "pmsl_eu", "wind_eu", "t850_eu", "t850", "geo_eu", "t2m_eu"]:
-        bounds = t2m_bounds if var_type=="t2m" else tp_acc_bounds if var_type=="tp_acc" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors if var_type=="pmsl" else pmsl_bounds_colors if var_type=="pmsl_eu" else wind_bounds if var_type=="wind_eu" else t2m_bounds if var_type=="t850_eu" else t2m_bounds if var_type=="t850" else geo_bounds if var_type=="geo_eu" else t2m_bounds
+    if var_type in ["t2m", "tp", "tp_eu", "tp_acc","wind","snow", "cloud", "twater", "snowfall", "pmsl", "pmsl_eu", "wind_eu", "t850_eu", "t850", "geo_eu", "t2m_eu"]:
+        bounds = t2m_bounds if var_type=="t2m" else prec_bounds if var_type in ["tp", "tp_eu"] else tp_acc_bounds if var_type=="tp_acc" else wind_bounds if var_type=="wind" else snow_bounds if var_type=="snow" else snowfall_bounds if var_type=="snowfall" else pmsl_bounds_colors if var_type=="pmsl" else pmsl_bounds_colors if var_type=="pmsl_eu" else wind_bounds if var_type=="wind_eu" else t2m_bounds if var_type=="t850_eu" else t2m_bounds if var_type=="t850" else geo_bounds if var_type=="geo_eu" else t2m_bounds
         cbar_ax = fig.add_axes([0.03, legend_bottom_px / FIG_H_PX, 0.94, legend_h_px / FIG_H_PX])
         cbar = fig.colorbar(im, cax=cbar_ax, orientation="horizontal", ticks=bounds)
         cbar.ax.tick_params(colors="black", labelsize=7)
@@ -695,6 +739,8 @@ for filename in sorted(os.listdir(data_dir)):
 
         if var_type=="tp_acc":
             cbar.set_ticklabels([int(tick) if float(tick).is_integer() else tick for tick in tp_acc_bounds])
+        if var_type=="tp":
+            cbar.set_ticklabels([int(tick) if float(tick).is_integer() else tick for tick in prec_bounds])
         if var_type=="snow":
             cbar.set_ticklabels([int(tick) if float(tick).is_integer() else tick for tick in snow_bounds])
     else:
@@ -710,6 +756,8 @@ for filename in sorted(os.listdir(data_dir)):
         "t2m": "Temperatur 2m (°C)",
         "t2m_eu": "Temperatur 2m (°C), Europa",
         "t850": "Temperatur 850hPa (°C)",
+        "tp": "Niederschlag, 1Std (mm)",
+        "tp_eu": "Niederschlag, 1Std (mm), Europa",
         "tp_acc": "Akkumulierter Niederschlag (mm)",
         "wind": "Windböen (km/h)",
         "snow": "Schneehöhe (cm)",
