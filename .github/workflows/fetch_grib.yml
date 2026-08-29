@@ -95,27 +95,6 @@ jobs:
             fi
           '
 
-      - name: Download t850hpa GRIB2 files
-        run: |
-          mkdir -p data/geo
-          cd data/geo
-          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/fi/icon-eu_europe_regular-lat-lon_pressure-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_500_FI.grib2.bz2"
-            wget -O geo_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "geo_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f geo_${i_padded}.grib2.bz2
-            fi
-          '
-
-          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {})
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/fi/icon-eu_europe_regular-lat-lon_pressure-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_500_FI.grib2.bz2"
-            wget -O geo_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "geo_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f geo_${i_padded}.grib2.bz2
-            fi
-          '
       
       - name: Download ww GRIB2 files
         run: |
@@ -182,72 +161,7 @@ jobs:
               bunzip2 -f wind_${i_padded}.grib2.bz2
             fi
           '
-          
-      - name: Download sde GRIB2 files
-        run: |
-          mkdir -p data/snow
-          cd data/snow
-          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_H_SNOW.grib2.bz2"
-            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f snow_${i_padded}.grib2.bz2
-            fi
-          '
 
-          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/h_snow/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_H_SNOW.grib2.bz2"
-            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f snow_${i_padded}.grib2.bz2
-            fi
-          '
-
-      - name: Download snowfall GRIB2 files
-        run: |
-          mkdir -p data/snowfall
-          cd data/snowfall
-          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/snowlmt/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_SNOWLMT.grib2.bz2"
-            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f snow_${i_padded}.grib2.bz2
-            fi
-          '
-
-          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/snowlmt/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_SNOWLMT.grib2.bz2"
-            wget -O snow_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "snow_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f snow_${i_padded}.grib2.bz2
-            fi
-          '
-
-      - name: Download pmsl GRIB2 files
-        run: |
-          mkdir -p data/pmsl
-          cd data/pmsl
-          seq 0 77 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/pmsl/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_PMSL.grib2.bz2"
-            wget -O pmsl_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "pmsl_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f pmsl_${i_padded}.grib2.bz2
-            fi
-          '
-
-          seq 78 3 120 | xargs -n 1 -P 12 -I{} bash -c '
-            i_padded=$(printf "%03d" {} )
-            URL="https://opendata.dwd.de/weather/nwp/icon-eu/grib/${{ env.RUN }}/pmsl/icon-eu_europe_regular-lat-lon_single-level_${{ env.DATE }}${{ env.RUN }}_${i_padded}_PMSL.grib2.bz2"
-            wget -O pmsl_${i_padded}.grib2.bz2 "$URL" || echo "Datei $URL nicht verfügbar, überspringe..."
-            if [ -f "pmsl_${i_padded}.grib2.bz2" ]; then
-              bunzip2 -f pmsl_${i_padded}.grib2.bz2
-            fi
-          '
 
       - name: Upload GRIB2 as artifact
         uses: actions/upload-artifact@v4
