@@ -378,7 +378,7 @@ DOMAIN_EXTENT_3857 = [float(_dom_x_min), float(_dom_y_min), float(_dom_x_max), f
 # nur für Deutschland (+ etwas Rand für Grenzregionen beim Hovern). Das
 # Farbbild selbst bleibt unverändert auf der vollen Domäne, nur das
 # DVAL-Array wird auf dieses Rechteck zugeschnitten.
-EMBED_DATA_VARS = {"t2m", "wind"}
+EMBED_DATA_VARS = {"t2m", "wind", "t850"}
 GERMANY_BBOX_LONLAT = [5.5, 15.3, 47.0, 55.3]  # lon_min, lon_max, lat_min, lat_max
 
 # Gleiches Ziel-Pixelraster wie in warp_equirect_to_webmercator (muss mit
@@ -457,6 +457,7 @@ DVAL_FOURCC = b"DVAL"
 QUANTUM_STEP = {
     "t2m": 0.05,   # °C, Anzeige mit 1 Dezimalstelle -> 0.05 ist mehr als genug
     "wind": 0.2,   # km/h, Anzeige mit 0 Dezimalstellen -> 0.2 ist mehr als genug
+    "t850": 0.05,  # °C, Anzeige mit 1 Dezimalstelle -> 0.05 ist mehr als genug
 }
 NAN_SENTINEL_I16 = -32768
 
